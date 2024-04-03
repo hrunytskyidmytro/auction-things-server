@@ -4,13 +4,18 @@ const bodyParser = require("body-parser");
 
 const db = require("./db");
 
+const userRoutes = require("./routes/user-route");
+
 const app = express();
 
 app.use(bodyParser.json());
 
+app.use("/api/user", userRoutes);
+
 const dbConnection = async () => {
   try {
     await db.authenticate();
+    await db.sync();
     console.log("Connection has been established successfully.");
     app.listen(process.env.PORT || 5001, () => {
       console.log("Server is running!");

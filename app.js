@@ -1,14 +1,23 @@
-const { createServer } = require('node:http');
+require("dotenv").config();
+const express = require("express");
+const bodyParser = require("body-parser");
 
-const hostname = '127.0.0.1';
-const port = 3000;
+const db = require("./db");
 
-const server = createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
-  res.end('Hello World');
-});
+const app = express();
 
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
+app.use(bodyParser.json());
+
+const dbConnection = async () => {
+  try {
+    await db.authenticate();
+    console.log("Connection has been established successfully.");
+    app.listen(process.env.PORT || 5001, () => {
+      console.log("Server is running!");
+    });
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
+};
+
+dbConnection();

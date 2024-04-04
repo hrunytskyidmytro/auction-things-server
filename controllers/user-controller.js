@@ -2,6 +2,8 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const HttpError = require("../errors/http-error");
+
 class UserController {
   async signup(req, res, next) {
     const { name, surname, patronymic, email, password, role } = req.body;
@@ -10,13 +12,17 @@ class UserController {
     try {
       existingUser = await User.findOne({ where: { email } });
     } catch (err) {
-      console.log(err);
-      const error = new Error("Signing up failed, please try again later.");
+      const error = HttpError.internalServerError(
+        "Signing up failed, please try again later.",
+        err
+      );
       return next(error);
     }
 
     if (existingUser) {
-      const error = new Error("User exists already, please login instead.");
+      const error = HttpError.forbidden(
+        "User exists already, please login instead."
+      );
       return next(error);
     }
 
@@ -24,7 +30,10 @@ class UserController {
     try {
       hashedPassword = await bcrypt.hash(password, 12);
     } catch (err) {
-      const error = new Error("Could not create user, please try again.");
+      const error = HttpError.internalServerError(
+        "Could not create user, please try again.",
+        err
+      );
       return next(error);
     }
 
@@ -49,11 +58,14 @@ class UserController {
         { expiresIn: "1h" }
       );
     } catch (err) {
-      const error = new Error("Signing up failed, please try again later.");
+      const error = HttpError.internalServerError(
+        "Signing up failed, please try again later.",
+        err
+      );
       return next(error);
     }
 
-    return res.json({ token });
+    return res.status(201).json({ token });
   }
 
   async login(req, res, next) {
@@ -63,12 +75,17 @@ class UserController {
     try {
       existingUser = await User.findOne({ where: { email } });
     } catch (err) {
-      const error = new Error("Logging up failed, please try again later.");
+      const error = HttpError.internalServerError(
+        "Logging up failed, please try again later.",
+        err
+      );
       return next(error);
     }
 
     if (!existingUser) {
-      const error = new Error("Invalid credentials, could not log you in.");
+      const error = HttpError.forbidden(
+        "Invalid credentials, could not log you in."
+      );
       return next(error);
     }
 
@@ -76,14 +93,17 @@ class UserController {
     try {
       isValidPassword = await bcrypt.compare(password, existingUser.password);
     } catch (err) {
-      const error = new Error(
-        "Could not log you in, please check your credentials and try again."
+      const error = HttpError.internalServerError(
+        "Could not log you in, please check your credentials and try again.",
+        err
       );
       return next(error);
     }
 
     if (!isValidPassword) {
-      const error = new Error("Invalid credentials, could not log you in.");
+      const error = HttpError.forbidden(
+        "Invalid credentials, could not log you in."
+      );
       return next(error);
     }
 
@@ -99,11 +119,14 @@ class UserController {
         { expiresIn: "1h" }
       );
     } catch (err) {
-      const error = new Error("Logging in failed, please try again later.");
+      const error = HttpError.internalServerError(
+        "Logging in failed, please try again later.",
+        err
+      );
       return next(error);
     }
 
-    return res.json({ token });
+    return res.status(200).json({ token });
   }
 }
 

@@ -1,6 +1,8 @@
 const { DataTypes, Model } = require("sequelize");
 const sequelize = require("../db");
 
+const { parsePhoneNumberFromString } = require("libphonenumber-js");
+
 class User extends Model {}
 
 User.init(
@@ -44,10 +46,45 @@ User.init(
     password: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        notNull: {
+          msg: "Please enter your password",
+        },
+      },
     },
     role: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    phoneNumber: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isValidPhoneNumber(value) {
+          const phoneNumber = parsePhoneNumberFromString(
+            `${this.countryCode} ${value}`,
+            "UA"
+          );
+          if (!phoneNumber || !phoneNumber.isValid()) {
+            throw new Error("Invalid phone number");
+          }
+        },
+      },
+    },
+    countryCode: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isValidCountryCode(value) {
+          const phoneNumber = parsePhoneNumberFromString(
+            `${value} ${this.phoneNumber}`,
+            "UA"
+          );
+          if (!phoneNumber || !phoneNumber.isValid()) {
+            throw new Error("Invalid country code or phone number");
+          }
+        },
+      },
     },
   },
   {

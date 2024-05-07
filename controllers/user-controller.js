@@ -6,12 +6,28 @@ const HttpError = require("../errors/http-error");
 
 class UserController {
   async signup(req, res, next) {
-    const { name, surname, patronymic, email, password, role } = req.body;
+    const {
+      name,
+      surname,
+      patronymic,
+      email,
+      password,
+      confirmPassword,
+      role,
+      phoneNumber,
+      countryCode,
+    } = req.body;
+
+    if (password !== confirmPassword) {
+      const error = HttpError.badRequest("Passwords do not match.");
+      return next(error);
+    }
 
     let existingUser;
     try {
       existingUser = await User.findOne({ where: { email } });
     } catch (err) {
+      console.log(err.message);
       const error = HttpError.internalServerError(
         "Signing up failed, please try again later.",
         err
@@ -44,6 +60,8 @@ class UserController {
       email,
       password: hashedPassword,
       role,
+      phoneNumber,
+      countryCode,
     });
 
     let token;

@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const HttpError = require("../errors/http-error");
+const PinCodeService = require("../controllers/pincode-controller");
 
 class UserController {
   async signup(req, res, next) {
@@ -64,6 +65,23 @@ class UserController {
       countryCode,
     });
 
+    try {
+      const pinCode = await PinCodeService.generatePinCode();
+      await PinCodeService.savePinCode(createdUser.id, pinCode);
+      await PinCodeService.sendPinCode(
+        createdUser.id,
+        createdUser.email,
+        pinCode
+      );
+    } catch (err) {
+      console.log(err.message);
+      const error = HttpError.internalServerError(
+        "Could not send pin code, please try again later.",
+        err
+      );
+      return next(error);
+    }
+
     let token;
     try {
       token = jwt.sign(
@@ -87,7 +105,12 @@ class UserController {
   }
 
   async login(req, res, next) {
-    const { email, password } = req.body;
+    const { email, password, pinCode } = req.body;
+
+    if (!pinCode) {
+      const error = HttpError.badRequest("Pin code is missing.");
+      return next(error);
+    }
 
     let existingUser;
     try {
@@ -121,6 +144,27 @@ class UserController {
     if (!isValidPassword) {
       const error = HttpError.forbidden(
         "Invalid credentials, could not log you in."
+      );
+      return next(error);
+    }
+
+    let isValidPinCode = false;
+    try {
+      isValidPinCode = await PinCodeService.checkPinCode(
+        existingUser.id,
+        pinCode
+      );
+    } catch (err) {
+      const error = HttpError.internalServerError(
+        "Could not check pin code, please try again later.",
+        err
+      );
+      return next(error);
+    }
+
+    if (!isValidPinCode) {
+      const error = HttpError.forbidden(
+        "Invalid pin code, could not log you in."
       );
       return next(error);
     }

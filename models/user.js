@@ -86,6 +86,14 @@ User.init(
         },
       },
     },
+    pinCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    pinCodeExpiration: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     sequelize,

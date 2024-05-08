@@ -94,6 +94,18 @@ User.init(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    pinCodeAttempts: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    pinCodeSendAttempts: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    pinCodeSendAttemptResetTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     sequelize,

@@ -6,7 +6,7 @@ const HttpError = require("../errors/http-error");
 const PinCodeService = require("../controllers/pincode-controller");
 
 class UserController {
-  async signup(req, res, next) {
+  async signUp(req, res, next) {
     const {
       name,
       surname,
@@ -66,12 +66,12 @@ class UserController {
     });
 
     try {
-      const pinCode = await PinCodeService.generatePinCode();
-      await PinCodeService.savePinCode(createdUser.id, pinCode);
+      const pinCodeData = await PinCodeService.generatePinCode();
+      await PinCodeService.savePinCode(createdUser.id, pinCodeData);
       await PinCodeService.sendPinCode(
         createdUser.id,
         createdUser.email,
-        pinCode
+        pinCodeData.pinCode
       );
     } catch (err) {
       console.log(err.message);
@@ -82,35 +82,11 @@ class UserController {
       return next(error);
     }
 
-    let token;
-    try {
-      token = jwt.sign(
-        {
-          userId: createdUser.id,
-          email: createdUser.email,
-          role: createdUser.role,
-        },
-        process.env.SECRET_KEY,
-        { expiresIn: "1h" }
-      );
-    } catch (err) {
-      const error = HttpError.internalServerError(
-        "Signing up failed, please try again later.",
-        err
-      );
-      return next(error);
-    }
-
-    return res.status(201).json({ token });
+    return res.status(201).json({ message: "User created successfully." });
   }
 
-  async login(req, res, next) {
-    const { email, password, pinCode } = req.body;
-
-    if (!pinCode) {
-      const error = HttpError.badRequest("Pin code is missing.");
-      return next(error);
-    }
+  async logIn(req, res, next) {
+    const { email, password } = req.body;
 
     let existingUser;
     try {
@@ -148,23 +124,54 @@ class UserController {
       return next(error);
     }
 
-    let isValidPinCode = false;
     try {
-      isValidPinCode = await PinCodeService.checkPinCode(
+      const pinCodeData = await PinCodeService.generatePinCode();
+      await PinCodeService.savePinCode(existingUser.id, pinCodeData);
+      await PinCodeService.sendPinCode(
         existingUser.id,
-        pinCode
+        existingUser.email,
+        pinCodeData.pinCode
       );
     } catch (err) {
+      console.log(err.message);
       const error = HttpError.internalServerError(
-        "Could not check pin code, please try again later.",
+        "Could not send pin code, please try again later.",
         err
       );
       return next(error);
     }
 
+    return res.status(200).json({ message: "Pin code sent successfully." });
+  }
+
+  async checkPinCode(req, res, next) {
+    const { email, pinCode } = req.body;
+
+    let existingUser;
+    try {
+      existingUser = await User.findOne({ where: { email } });
+    } catch (err) {
+      const error = HttpError.internalServerError(
+        "Checking pin code failed, please try again later.",
+        err
+      );
+      return next(error);
+    }
+
+    if (!existingUser) {
+      const error = HttpError.forbidden(
+        "User not found, please check your email and try again."
+      );
+      return next(error);
+    }
+
+    const isValidPinCode = await PinCodeService.checkPinCode(
+      existingUser.id,
+      pinCode
+    );
     if (!isValidPinCode) {
       const error = HttpError.forbidden(
-        "Invalid pin code, could not log you in."
+        "Invalid pin code, please check your pin code and try again."
       );
       return next(error);
     }
@@ -182,13 +189,13 @@ class UserController {
       );
     } catch (err) {
       const error = HttpError.internalServerError(
-        "Logging in failed, please try again later.",
+        "Checking pin code failed, please try again later.",
         err
       );
       return next(error);
     }
 
-    return res.status(200).json({ token });
+    res.status(200).json({ token });
   }
 }
 

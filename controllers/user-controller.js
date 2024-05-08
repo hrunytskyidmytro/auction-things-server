@@ -197,6 +197,22 @@ class UserController {
 
     res.status(200).json({ token });
   }
+
+  async resendPinCode(req, res, next) {
+    const { userId, email } = req.body;
+
+    try {
+      await PinCodeService.sendPinCode(userId, email);
+      return res.status(200).json({ message: "Pin code resent successfully." });
+    } catch (err) {
+      console.log(err.message);
+      const error = HttpError.internalServerError(
+        "Resending pin code failed, please try again later.",
+        err
+      );
+      return next(error);
+    }
+  }
 }
 
 module.exports = new UserController();

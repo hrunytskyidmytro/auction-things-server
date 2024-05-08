@@ -23,6 +23,10 @@ class PinCodeService {
   static async sendPinCode(userId, email) {
     const user = await User.findByPk(userId);
 
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
     if (user.pinCodeSendAttempts >= process.env.MAX_PIN_CODE_SEND_ATTEMPTS) {
       const timeLeft = user.pinCodeSendAttemptResetTime
         ? user.pinCodeSendAttemptResetTime.getTime() - new Date().getTime()

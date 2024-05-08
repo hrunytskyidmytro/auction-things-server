@@ -9,4 +9,6 @@ router.post("/login", userController.logIn);
 
 router.post("/check-pin-code", userController.checkPinCode);
 
+router.post("/resend-pin-code", userController.resendPinCode);
+
 module.exports = router;

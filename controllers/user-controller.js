@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const HttpError = require("../errors/http-error");
-const PinCodeService = require("../controllers/pincode-controller");
+const PinCodeService = require("./pin-code-controller");
 
 class UserController {
   async signUp(req, res, next) {

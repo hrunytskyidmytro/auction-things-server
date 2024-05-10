@@ -1,8 +1,8 @@
 const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const User = require("../models/user");
 const HttpError = require("../errors/http-error");
 
 class GoogleAuthController {
@@ -39,7 +39,7 @@ class GoogleAuthController {
               surname: profile.family_name,
               email: profile.emails[0].value,
               password: "",
-              role: "user",
+              role: "BUYER",
             });
 
             const token = jwt.sign(

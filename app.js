@@ -5,8 +5,8 @@ const bodyParser = require("body-parser");
 const db = require("./db");
 
 const googleAuthRoutes = require("./routes/google-auth-route");
-
 const userRoutes = require("./routes/user-route");
+const passwordResetRoutes = require("./routes/password-reset-route");
 
 const app = express();
 
@@ -15,6 +15,8 @@ app.use(bodyParser.json());
 app.use("/api", googleAuthRoutes);
 
 app.use("/api/user", userRoutes);
+
+app.use("/api/password", passwordResetRoutes);
 
 const dbConnection = async () => {
   try {

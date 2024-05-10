@@ -28,12 +28,12 @@ User.init(
     },
     patronymic: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notNull: {
-          msg: "Please enter your patronymic",
-        },
-      },
+      allowNull: true,
+      // validate: {
+      //   notNull: {
+      //     msg: "Please enter your patronymic",
+      //   },
+      // },
     },
     email: {
       type: DataTypes.STRING,
@@ -58,33 +58,33 @@ User.init(
     },
     phoneNumber: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        isValidPhoneNumber(value) {
-          const phoneNumber = parsePhoneNumberFromString(
-            `${this.countryCode} ${value}`,
-            "UA"
-          );
-          if (!phoneNumber || !phoneNumber.isValid()) {
-            throw new Error("Invalid phone number");
-          }
-        },
-      },
+      allowNull: true,
+      // validate: {
+      //   isValidPhoneNumber(value) {
+      //     const phoneNumber = parsePhoneNumberFromString(
+      //       `${this.countryCode} ${value}`,
+      //       "UA"
+      //     );
+      //     if (!phoneNumber || !phoneNumber.isValid()) {
+      //       throw new Error("Invalid phone number");
+      //     }
+      //   },
+      // },
     },
     countryCode: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        isValidCountryCode(value) {
-          const phoneNumber = parsePhoneNumberFromString(
-            `${value} ${this.phoneNumber}`,
-            "UA"
-          );
-          if (!phoneNumber || !phoneNumber.isValid()) {
-            throw new Error("Invalid country code or phone number");
-          }
-        },
-      },
+      allowNull: true,
+      // validate: {
+      //   isValidCountryCode(value) {
+      //     const phoneNumber = parsePhoneNumberFromString(
+      //       `${value} ${this.phoneNumber}`,
+      //       "UA"
+      //     );
+      //     if (!phoneNumber || !phoneNumber.isValid()) {
+      //       throw new Error("Invalid country code or phone number");
+      //     }
+      //   },
+      // },
     },
     pinCode: {
       type: DataTypes.STRING,
@@ -103,6 +103,22 @@ User.init(
       defaultValue: 0,
     },
     pinCodeSendAttemptResetTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    resetPasswordToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    resetPasswordExpiration: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    passwordResetAttempts: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    passwordResetAttemptsExpiration: {
       type: DataTypes.DATE,
       allowNull: true,
     },

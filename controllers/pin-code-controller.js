@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
+
 const User = require("../models/user");
 
 class PinCodeService {
@@ -87,14 +88,6 @@ class PinCodeService {
         await user.save();
         return false;
       }
-      await user.save();
-      return false;
-    }
-    const currentTime = new Date();
-    if (user.pinCodeExpiration && currentTime > user.pinCodeExpiration) {
-      user.pinCode = null;
-      user.pinCodeExpiration = null;
-      user.pinCodeAttempts = 0;
       await user.save();
       return false;
     }

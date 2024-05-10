@@ -1,7 +1,7 @@
-const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const User = require("../models/user");
 const HttpError = require("../errors/http-error");
 const PinCodeService = require("./pin-code-controller");
 

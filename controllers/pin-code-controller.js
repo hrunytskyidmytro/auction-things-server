@@ -97,22 +97,6 @@ class PinCodeService {
     await user.save();
     return true;
   }
-
-  static async clearExpiredPinCodes() {
-    const currentTime = new Date();
-    const users = await User.findAll();
-
-    for (const user of users) {
-      if (user.pinCodeExpiration && currentTime > user.pinCodeExpiration) {
-        user.pinCode = null;
-        user.pinCodeExpiration = null;
-        user.pinCodeAttempts = 0;
-        await user.save();
-      }
-    }
-  }
 }
-
-setInterval(PinCodeService.clearExpiredPinCodes, 60 * 1000);
 
 module.exports = PinCodeService;

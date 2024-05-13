@@ -45,14 +45,6 @@ class PasswordResetController {
     user.passwordResetAttemptsExpiration = currentTime;
     await user.save();
 
-    setTimeout(async () => {
-      user.resetPasswordToken = null;
-      user.resetPasswordExpiration = null;
-      user.passwordResetAttempts = 0;
-      user.passwordResetAttemptsExpiration = null;
-      await user.save();
-    }, 1 * 60 * 60 * 1000);
-
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {

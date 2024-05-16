@@ -1,0 +1,33 @@
+const jwt = require("jsonwebtoken");
+
+const HttpError = require("../errors/http-error");
+
+module.exports = (req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return next();
+  }
+  try {
+    const authorizationHeader = req.headers.authorization;
+    if (!authorizationHeader) {
+      throw new Error(
+        "Не вдалося пройти автентифікацію: Відсутній заголовок авторизації!"
+      );
+    }
+    const token = authorizationHeader.split(" ")[1];
+    if (!token) {
+      throw new Error("Помилка автентифікації!");
+    }
+    const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
+    if (!decodedToken) {
+      throw new Error(
+        "Не вдалося пройти автентифікацію: Декодований токен порожній!"
+      );
+    }
+    req.userData = { userId: decodedToken.userId, role: decodedToken.role };
+    next();
+  } catch (err) {
+    console.log(err);
+    const error = HttpError.forbidden("Помилка автентифікації!");
+    return next(error);
+  }
+};

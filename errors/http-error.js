@@ -20,6 +20,10 @@ class HttpError extends Error {
   static internalServerError(message, data) {
     return new HttpError(message || "Internal server error", 500, data || null);
   }
+
+  static unauthorized(message, data) {
+    return new HttpError(message || "Unauthorized", 401, data || null);
+  }
 }
 
 module.exports = HttpError;

@@ -195,7 +195,13 @@ class UserController {
       return next(error);
     }
 
-    res.status(200).json({ token });
+    res.status(200).json({
+      token,
+      name: existingUser.name,
+      surname: existingUser.surname,
+      email: existingUser.email,
+      role: existingUser.role,
+    });
   }
 
   async resendPinCode(req, res, next) {
@@ -212,6 +218,23 @@ class UserController {
       );
       return next(error);
     }
+  }
+
+  async getCurrentUserInfo(req, res, next) {
+    const { userId } = req.userData;
+
+    const existingUser = await User.findByPk(userId);
+
+    if (!existingUser) {
+      return HttpError.unauthorized("Неавторизований доступ.");
+    }
+
+    return res.status(200).json({
+      name: existingUser.name,
+      surname: existingUser.surname,
+      email: existingUser.email,
+      role: existingUser.role,
+    });
   }
 }
 

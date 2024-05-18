@@ -1,22 +1,21 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const User = require("../models/user");
+const { User } = require("../models");
 const HttpError = require("../errors/http-error");
 const PinCodeService = require("./pin-code-controller");
 
 class UserController {
   async signUp(req, res, next) {
     const {
-      name,
-      surname,
+      firstName,
+      lastName,
       patronymic,
       email,
       password,
       confirmPassword,
       role,
       phoneNumber,
-      countryCode,
     } = req.body;
 
     if (password !== confirmPassword) {
@@ -55,14 +54,13 @@ class UserController {
     }
 
     const createdUser = await User.create({
-      name,
-      surname,
+      firstName,
+      lastName,
       patronymic,
       email,
       password: hashedPassword,
       role,
       phoneNumber,
-      countryCode,
     });
 
     try {
@@ -197,8 +195,8 @@ class UserController {
 
     res.status(200).json({
       token,
-      name: existingUser.name,
-      surname: existingUser.surname,
+      firstName: existingUser.firstName,
+      lastName: existingUser.lastName,
       email: existingUser.email,
       role: existingUser.role,
     });
@@ -230,8 +228,8 @@ class UserController {
     }
 
     return res.status(200).json({
-      name: existingUser.name,
-      surname: existingUser.surname,
+      firstName: existingUser.firstName,
+      lastName: existingUser.lastName,
       email: existingUser.email,
       role: existingUser.role,
     });

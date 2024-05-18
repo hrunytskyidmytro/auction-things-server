@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 
-const User = require("../models/user");
+const { User } = require("../models");
 const HttpError = require("../errors/http-error");
 
 class PasswordResetController {

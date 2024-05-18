@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 
-const User = require("../models/user");
+const { User } = require("../models");
 
 class PinCodeService {
   static async generatePinCode() {
@@ -94,6 +94,7 @@ class PinCodeService {
     user.pinCode = null;
     user.pinCodeExpiration = null;
     user.pinCodeAttempts = 0;
+    user.pinCodeSendAttempts = 0;
     await user.save();
     return true;
   }

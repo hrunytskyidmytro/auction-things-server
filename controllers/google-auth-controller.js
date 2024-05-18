@@ -2,8 +2,7 @@ const passport = require("passport");
 const jwt = require("jsonwebtoken");
 
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const User = require("../models/user");
-const HttpError = require("../errors/http-error");
+const { User } = require("../models");
 
 class GoogleAuthController {
   constructor() {
@@ -12,7 +11,7 @@ class GoogleAuthController {
         {
           clientID: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: "/api/auth/google/callback",
+          callbackURL: "http://localhost:5001/api/auth/google/callback",
         },
         async (accessToken, refreshToken, profile, done) => {
           try {
@@ -35,10 +34,9 @@ class GoogleAuthController {
             }
 
             const newUser = await User.create({
-              name: profile.given_name,
-              surname: profile.family_name,
+              firstName: profile.name.givenName,
+              lastName: profile.name.familyName,
               email: profile.emails[0].value,
-              password: "",
               role: "BUYER",
             });
 
@@ -72,22 +70,17 @@ class GoogleAuthController {
 
   async callback(req, res, next) {
     passport.authenticate("google", async (err, token, info) => {
-      if (err) {
-        const error = HttpError.internalServerError(
-          "Google authentication failed, please try again later.",
-          err
+      if (err || !token) {
+        return res.redirect(
+          `http://localhost:3000/login?error=${encodeURIComponent(
+            "Не вдалося пройти автентифікацію в Google, повторіть спробу пізніше."
+          )}`
         );
-        return next(error);
       }
 
-      if (!token) {
-        const error = HttpError.forbidden(
-          "Google authentication failed, please try again later."
-        );
-        return next(error);
-      }
-
-      return res.status(200).json({ token });
+      return res.redirect(
+        `http://localhost:3000/auth/google/callback?token=${token.token}`
+      );
     })(req, res, next);
   }
 }

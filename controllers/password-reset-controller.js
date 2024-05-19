@@ -11,7 +11,7 @@ class PasswordResetController {
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: "Користувача не знайдено." });
     }
 
     const currentTime = new Date();
@@ -27,16 +27,15 @@ class PasswordResetController {
       await user.save();
 
       return res.status(400).json({
-        message: `You have exceeded the maximum number of password reset attempts. Please try again in ${Math.ceil(
+        message: `Ви перевищили максимальну кількість спроб скидання пароля. Будь ласка, спробуйте ще раз через ${Math.ceil(
           (user.passwordResetAttemptsExpiration - currentTime) / 60000
-        )} minutes.`,
+        )} хвилин.`,
       });
     }
 
     const resetPasswordToken = crypto.randomBytes(20).toString("hex");
-    const hashedResetPasswordToken = await bcrypt.hash(resetPasswordToken, 10);
 
-    user.resetPasswordToken = hashedResetPasswordToken;
+    user.resetPasswordToken = resetPasswordToken;
     user.resetPasswordExpiration = new Date();
     user.resetPasswordExpiration.setHours(
       user.resetPasswordExpiration.getHours() + 1
@@ -56,32 +55,40 @@ class PasswordResetController {
     const mailOptions = {
       from: process.env.EMAIL,
       to: email,
-      subject: "Password reset request.",
-      html: `<p>Click <a href="http://localhost:3000/reset-password/${hashedResetPasswordToken}">here</a> to reset your password. This link will expire in 1 hour and can only be used once. If you have already reset your password, please ignore this email.</p>`,
+      subject: "Запит на зміну пароля.",
+      html: `<p>Натисніть <a href="http://localhost:3000/reset-password/${resetPasswordToken}">сюди</a> щоб скинути пароль. Термін дії цього посилання закінчується через 1 годину, і ним можна скористатися лише один раз. Якщо ви вже змінили пароль, будь ласка, ігноруйте цей лист.</p>`,
     };
 
     await transporter.sendMail(mailOptions);
 
-    return res.status(200).json({ message: "Password reset token sent." });
+    return res
+      .status(200)
+      .json({ message: "Токен скидання пароля надіслано." });
   }
 
   async resetPassword(req, res, next) {
     const { resetPasswordToken, newPassword, confirmPassword } = req.body;
 
     if (newPassword !== confirmPassword) {
-      const error = HttpError.badRequest("Passwords do not match.");
+      const error = HttpError.badRequest("Паролі не збігаються.");
       return next(error);
     }
+    console.log("Token ", resetPasswordToken);
+    const user = await User.findOne({
+      where: {
+        resetPasswordToken,
+      },
+    });
 
-    const user = await User.findOne({ where: { resetPasswordToken } });
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res.status(404).json({ message: "Користувача не знайдено." });
     }
 
     if (!user.resetPasswordToken || user.resetPasswordExpiration < new Date()) {
-      return res
-        .status(400)
-        .json({ message: "Password reset token is invalid or has expired." });
+      return res.status(400).json({
+        message:
+          "Токен скидання пароля недійсний або термін його дії закінчився.",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -92,7 +99,9 @@ class PasswordResetController {
     user.passwordResetAttemptsExpiration = null;
     await user.save();
 
-    return res.status(200).json({ message: "Password reset successful." });
+    return res
+      .status(200)
+      .json({ message: "Скидання пароля відбулося успішно." });
   }
 }
 

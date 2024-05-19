@@ -19,7 +19,7 @@ class UserController {
     } = req.body;
 
     if (password !== confirmPassword) {
-      const error = HttpError.badRequest("Passwords do not match.");
+      const error = HttpError.badRequest("Паролі не співпадають.");
       return next(error);
     }
 
@@ -27,17 +27,15 @@ class UserController {
     try {
       existingUser = await User.findOne({ where: { email } });
     } catch (err) {
-      console.log(err.message);
       const error = HttpError.internalServerError(
-        "Signing up failed, please try again later.",
-        err
+        "Помилка під час реєстрації, будь ласка, спробуйте пізніше."
       );
       return next(error);
     }
 
     if (existingUser) {
       const error = HttpError.forbidden(
-        "User exists already, please login instead."
+        "Користувач вже існує, будь ласка, увійдіть."
       );
       return next(error);
     }
@@ -47,8 +45,7 @@ class UserController {
       hashedPassword = await bcrypt.hash(password, 12);
     } catch (err) {
       const error = HttpError.internalServerError(
-        "Could not create user, please try again.",
-        err
+        "Не вдалося створити користувача, спробуйте ще раз."
       );
       return next(error);
     }
@@ -72,15 +69,13 @@ class UserController {
         pinCodeData.pinCode
       );
     } catch (err) {
-      console.log(err.message);
       const error = HttpError.internalServerError(
-        "Could not send pin code, please try again later.",
-        err
+        "Не вдалося надіслати пін-код, повторіть спробу пізніше."
       );
       return next(error);
     }
 
-    return res.status(201).json({ message: "User created successfully." });
+    return res.status(201).json({ message: "Користувача успішно створено." });
   }
 
   async logIn(req, res, next) {
@@ -91,15 +86,14 @@ class UserController {
       existingUser = await User.findOne({ where: { email } });
     } catch (err) {
       const error = HttpError.internalServerError(
-        "Logging up failed, please try again later.",
-        err
+        "Не вдалося увійти, будь ласка, спробуйте пізніше."
       );
       return next(error);
     }
 
     if (!existingUser) {
       const error = HttpError.forbidden(
-        "Invalid credentials, could not log you in."
+        "Невірні облікові дані, не вдалося увійти."
       );
       return next(error);
     }
@@ -109,15 +103,14 @@ class UserController {
       isValidPassword = await bcrypt.compare(password, existingUser.password);
     } catch (err) {
       const error = HttpError.internalServerError(
-        "Could not log you in, please check your credentials and try again.",
-        err
+        "Не вдалося увійти, будь ласка, перевірте свої облікові дані та спробуйте ще раз."
       );
       return next(error);
     }
 
     if (!isValidPassword) {
       const error = HttpError.forbidden(
-        "Invalid credentials, could not log you in."
+        "Невірні облікові дані, не вдалося увійти."
       );
       return next(error);
     }
@@ -131,15 +124,16 @@ class UserController {
         pinCodeData.pinCode
       );
     } catch (err) {
-      console.log(err.message);
       const error = HttpError.internalServerError(
-        "Could not send pin code, please try again later.",
-        err
+        "Не вдалося надіслати пін-код, повторіть спробу пізніше."
       );
       return next(error);
     }
 
-    return res.status(200).json({ message: "Pin code sent successfully." });
+    return res.status(200).json({
+      message: "Пін-код успішно відправлено.",
+      userId: existingUser.id,
+    });
   }
 
   async checkPinCode(req, res, next) {
@@ -150,15 +144,14 @@ class UserController {
       existingUser = await User.findOne({ where: { email } });
     } catch (err) {
       const error = HttpError.internalServerError(
-        "Checking pin code failed, please try again later.",
-        err
+        "Не вдалося перевірити пін-код, будь ласка, спробуйте пізніше."
       );
       return next(error);
     }
 
     if (!existingUser) {
       const error = HttpError.forbidden(
-        "User not found, please check your email and try again."
+        "Користувача не знайдено, перевірте свою електронну пошту та спробуйте ще раз."
       );
       return next(error);
     }
@@ -169,7 +162,7 @@ class UserController {
     );
     if (!isValidPinCode) {
       const error = HttpError.forbidden(
-        "Invalid pin code, please check your pin code and try again."
+        "Неправильний пін-код, будь ласка, перевірте свій пін-код і спробуйте ще раз."
       );
       return next(error);
     }
@@ -187,8 +180,7 @@ class UserController {
       );
     } catch (err) {
       const error = HttpError.internalServerError(
-        "Checking pin code failed, please try again later.",
-        err
+        "Не вдалося перевірити пін-код, будь ласка, спробуйте пізніше."
       );
       return next(error);
     }
@@ -207,12 +199,10 @@ class UserController {
 
     try {
       await PinCodeService.sendPinCode(userId, email);
-      return res.status(200).json({ message: "Pin code resent successfully." });
+      return res.status(200).json({ message: "Пін-код успішно відправлено." });
     } catch (err) {
-      console.log(err.message);
       const error = HttpError.internalServerError(
-        "Resending pin code failed, please try again later.",
-        err
+        "Повторно відправити пін-код не вдалося, будь ласка, повторіть спробу пізніше."
       );
       return next(error);
     }

@@ -25,7 +25,7 @@ class PinCodeService {
     const user = await User.findByPk(userId);
 
     if (!user) {
-      throw new Error("User not found.");
+      throw new Error("Користувача не знайдено.");
     }
 
     if (user.pinCodeSendAttempts >= process.env.MAX_PIN_CODE_SEND_ATTEMPTS) {
@@ -35,9 +35,9 @@ class PinCodeService {
 
       if (timeLeft > 0) {
         throw new Error(
-          `You have exceeded the maximum number of attempts to send a pin code. Please try again in ${Math.ceil(
+          `Ви перевищили максимальну кількість спроб надіслати пін-код. Будь ласка, спробуйте ще раз через ${Math.ceil(
             timeLeft / 1000 / 60
-          )} minutes.`
+          )} хвилин.`
         );
       } else {
         user.pinCodeSendAttempts = 0;
@@ -63,8 +63,8 @@ class PinCodeService {
     const mailOptions = {
       from: process.env.EMAIL,
       to: email,
-      subject: "Your pin code",
-      text: `Your pin code is: ${pinCodeData.pinCode}`,
+      subject: "Ваш пін-код",
+      text: `Ваш пін-код: ${pinCodeData.pinCode}`,
     };
 
     await transporter.sendMail(mailOptions);

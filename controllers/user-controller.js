@@ -75,7 +75,12 @@ class UserController {
       return next(error);
     }
 
-    return res.status(201).json({ message: "Користувача успішно створено." });
+    return res
+      .status(201)
+      .json({
+        message: "Користувача успішно створено.",
+        userId: createdUser.id,
+      });
   }
 
   async logIn(req, res, next) {

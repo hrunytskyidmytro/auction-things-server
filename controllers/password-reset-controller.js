@@ -73,7 +73,7 @@ class PasswordResetController {
       const error = HttpError.badRequest("Паролі не збігаються.");
       return next(error);
     }
-    console.log("Token ", resetPasswordToken);
+
     const user = await User.findOne({
       where: {
         resetPasswordToken,

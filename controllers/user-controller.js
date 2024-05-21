@@ -16,6 +16,9 @@ class UserController {
       confirmPassword,
       role,
       phoneNumber,
+      companyName,
+      companySite,
+      position,
     } = req.body;
 
     if (password !== confirmPassword) {
@@ -58,6 +61,9 @@ class UserController {
       password: hashedPassword,
       role,
       phoneNumber,
+      companyName,
+      companySite,
+      position,
     });
 
     try {
@@ -75,12 +81,10 @@ class UserController {
       return next(error);
     }
 
-    return res
-      .status(201)
-      .json({
-        message: "Користувача успішно створено.",
-        userId: createdUser.id,
-      });
+    return res.status(201).json({
+      message: "Користувача успішно створено.",
+      userId: createdUser.id,
+    });
   }
 
   async logIn(req, res, next) {

@@ -4,7 +4,15 @@ const router = new Router();
 const userController = require("../controllers/user-controller");
 const checkAuth = require("../middleware/check-auth");
 
-router.post("/signup", userController.signUp);
+const { validateSignUp } = require("../validators/sign-up-validation");
+const validationErrorHandler = require("../middleware/validation-error-handler");
+
+router.post(
+  "/signup",
+  validateSignUp,
+  validationErrorHandler,
+  userController.signUp
+);
 
 router.post("/login", userController.logIn);
 

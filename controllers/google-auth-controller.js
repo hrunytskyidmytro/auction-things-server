@@ -52,7 +52,6 @@ class GoogleAuthController {
 
             return done(null, { token });
           } catch (err) {
-            console.log(err.message);
             return done(err);
           }
         }

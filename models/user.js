@@ -50,7 +50,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       role: {
         type: DataTypes.STRING,
-        allowNull: true,
+        allowNull: false,
       },
       phoneNumber: {
         type: DataTypes.STRING,
@@ -90,6 +90,18 @@ module.exports = (sequelize, DataTypes) => {
       },
       passwordResetAttemptsExpiration: {
         type: DataTypes.DATE,
+        allowNull: true,
+      },
+      companyName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      companySite: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      position: {
+        type: DataTypes.STRING,
         allowNull: true,
       },
     },

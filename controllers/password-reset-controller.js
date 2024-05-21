@@ -34,7 +34,6 @@ class PasswordResetController {
     }
 
     const resetPasswordToken = crypto.randomBytes(20).toString("hex");
-
     user.resetPasswordToken = resetPasswordToken;
     user.resetPasswordExpiration = new Date();
     user.resetPasswordExpiration.setHours(
@@ -63,7 +62,7 @@ class PasswordResetController {
 
     return res
       .status(200)
-      .json({ message: "Токен скидання пароля надіслано." });
+      .json({ message: "Запит на скидання пароля успішно надіслано." });
   }
 
   async resetPassword(req, res, next) {

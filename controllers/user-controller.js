@@ -169,6 +169,7 @@ class UserController {
       existingUser.id,
       pinCode
     );
+
     if (!isValidPinCode) {
       const error = HttpError.forbidden(
         "Неправильний пін-код, будь ласка, перевірте свій пін-код і спробуйте ще раз."

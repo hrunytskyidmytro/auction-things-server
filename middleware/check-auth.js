@@ -6,6 +6,7 @@ module.exports = (req, res, next) => {
   if (req.method === "OPTIONS") {
     return next();
   }
+
   try {
     const authorizationHeader = req.headers.authorization;
     if (!authorizationHeader) {
@@ -26,8 +27,7 @@ module.exports = (req, res, next) => {
     req.userData = { userId: decodedToken.userId, role: decodedToken.role };
     next();
   } catch (err) {
-    console.log(err);
-    const error = HttpError.forbidden("Помилка автентифікації!");
+    const error = HttpError.unauthorized("Помилка автентифікації!");
     return next(error);
   }
 };

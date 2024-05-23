@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       role: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM("BUYER", "SELLER", "ADMIN"),
         allowNull: false,
       },
       phoneNumber: {

@@ -11,6 +11,8 @@ const googleAuthRoutes = require("./routes/google-auth-route");
 const userRoutes = require("./routes/user-route");
 const passwordResetRoutes = require("./routes/password-reset-route");
 
+const lotRoutes = require("./routes/lot-route");
+
 const app = express();
 
 app.use(cors());
@@ -22,6 +24,8 @@ app.use("/api", googleAuthRoutes);
 app.use("/api/user", userRoutes);
 
 app.use("/api/password", passwordResetRoutes);
+
+app.use("/api/lots", lotRoutes);
 
 app.use((req, res, next) => {
   const error = HttpError.notFound("Не вдалося знайти маршрут.");

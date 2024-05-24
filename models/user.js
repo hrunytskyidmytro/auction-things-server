@@ -2,7 +2,19 @@
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
-    static associate(models) {}
+    static associate(models) {
+      User.hasMany(models.Bid, { foreignKey: "userId" });
+      User.hasMany(models.Payment, { foreignKey: "userId" });
+      User.hasMany(models.Notification, { foreignKey: "userId" });
+      User.hasMany(models.Review, { foreignKey: "userId" });
+      User.hasMany(models.Lot, { foreignKey: "userId" });
+      User.hasMany(models.Transaction, { foreignKey: "userId" });
+      User.belongsToMany(models.Lot, {
+        through: "Watchlist",
+        foreignKey: "userId",
+        as: "watchlistLots",
+      });
+    }
   }
   User.init(
     {
@@ -103,6 +115,11 @@ module.exports = (sequelize, DataTypes) => {
       position: {
         type: DataTypes.STRING,
         allowNull: true,
+      },
+      balance: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.0,
       },
     },
     {

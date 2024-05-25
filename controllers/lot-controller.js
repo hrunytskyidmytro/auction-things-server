@@ -1,9 +1,24 @@
-const { Lot } = require("../models");
+const { Lot, Bid, User } = require("../models");
 const HttpError = require("../errors/http-error");
+
+const nodemailer = require("nodemailer");
 
 class LotController {
   async createLot(req, res, next) {
-    const { title, description, startingPrice, endDate, imageUrl } = req.body;
+    if (!req.file) {
+      return next(HttpError.badRequest("Зображення не надано."));
+    }
+
+    const {
+      title,
+      description,
+      startingPrice,
+      endDate,
+      categoryId,
+      buyNowPrice,
+      bidIncrement,
+      reservePrice,
+    } = req.body;
     const userId = req.user.id;
 
     try {
@@ -14,8 +29,13 @@ class LotController {
         startingPrice,
         currentPrice: startingPrice,
         endDate,
-        imageUrl,
+        imageUrl: req.file.path,
         status: "PENDING",
+        categoryId,
+        buyNowPrice,
+        bidIncrement,
+        reservePrice,
+        bidCount: 0,
       });
 
       res.status(201).json(newLot);
@@ -31,7 +51,17 @@ class LotController {
   async updateLot(req, res, next) {
     const lotId = req.params.id;
     const userId = req.user.id;
-    const { title, description, startingPrice, endDate, imageUrl } = req.body;
+    const {
+      title,
+      description,
+      startingPrice,
+      endDate,
+      imageUrl,
+      categoryId,
+      buyNowPrice,
+      bidIncrement,
+      reservePrice,
+    } = req.body;
 
     try {
       const lot = await Lot.findByPk(lotId);
@@ -51,6 +81,10 @@ class LotController {
       lot.startingPrice = startingPrice || lot.startingPrice;
       lot.endDate = endDate || lot.endDate;
       lot.imageUrl = imageUrl || lot.imageUrl;
+      lot.categoryId = categoryId || lot.categoryId;
+      lot.buyNowPrice = buyNowPrice || lot.buyNowPrice;
+      lot.bidIncrement = bidIncrement || lot.bidIncrement;
+      lot.reservePrice = reservePrice || lot.reservePrice;
 
       await lot.save();
 
@@ -95,6 +129,7 @@ class LotController {
 
     try {
       const lot = await Lot.findByPk(lotId);
+
       if (!lot) {
         return next(HttpError.notFound("Лот не знайдено."));
       }
@@ -123,7 +158,9 @@ class LotController {
     const userId = req.user.id;
 
     try {
-      const lot = await Lot.findByPk(lotId);
+      const lot = await Lot.findByPk(lotId, {
+        include: [Bid],
+      });
       if (!lot) {
         return next(HttpError.notFound("Лот не знайдено."));
       }
@@ -134,8 +171,36 @@ class LotController {
         );
       }
 
+      const bids = lot.Bids;
+      if (bids.length > 0) {
+        const highestBid = bids.reduce(
+          (max, bid) => (bid.amount > max.amount ? bid : max),
+          bids[0]
+        );
+        lot.winnerId = highestBid.userId;
+      }
+
       lot.status = "CLOSED";
       await lot.save();
+
+      if (lot.winnerId) {
+        const winner = await User.findByPk(lot.winnerId);
+        await this.sendEmail(
+          winner.email,
+          "Вітаємо!",
+          `Ви виграли лот: ${lot.title}`
+        );
+      }
+
+      const losingBids = bids.filter((bid) => bid.userId !== lot.winnerId);
+      for (const bid of losingBids) {
+        const user = await User.findByPk(bid.userId);
+        await this.sendEmail(
+          user.email,
+          "Дякуємо за участь.",
+          `Ви не виграли лот: ${lot.title}`
+        );
+      }
 
       res.json(lot);
     } catch (error) {
@@ -157,6 +222,29 @@ class LotController {
           "Не вдалося отримати лоти. Будь ласка, спробуйте пізніше."
         )
       );
+    }
+  }
+
+  async sendEmail(to, subject, text) {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to,
+      subject,
+      text,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.log("Не вдалося надіслати електронного листа:", error);
     }
   }
 }

@@ -3,6 +3,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
+const fs = require("fs");
+const path = require("path");
+
 const db = require("./db");
 
 const HttpError = require("./errors/http-error");
@@ -16,6 +19,8 @@ const lotRoutes = require("./routes/lot-route");
 const app = express();
 
 app.use(cors());
+
+app.use("/uploads/images", express.static(path.join("uploads", "images")));
 
 app.use(bodyParser.json());
 
@@ -33,6 +38,11 @@ app.use((req, res, next) => {
 });
 
 app.use((error, req, res, next) => {
+  if (req.file) {
+    fs.unlink(req.file.path, (err) => {
+      console.log(err);
+    });
+  }
   res.status(error.code || 500);
   res.json({ message: error.message || "Виникла невідома помилка!" });
 });

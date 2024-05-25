@@ -38,6 +38,43 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("OPEN", "CLOSED", "PENDING"),
         defaultValue: "PENDING",
       },
+      categoryId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "Categories",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
+      buyNowPrice: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+      },
+      bidIncrement: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+      },
+      reservePrice: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+      },
+      bidCount: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      winnerId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "Users",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
     },
     {
       sequelize,

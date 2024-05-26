@@ -21,7 +21,7 @@ const fileUpload = multer({
   fileFilter: (req, file, cb) => {
     const isValidMimeType = !!MINE_TYPE_MAP[file.mimetype];
     if (!isValidMimeType) {
-      const error = new Error("Неправильний тип міни!");
+      const error = new Error("Неправильний тип mime!");
       return cb(error, false);
     }
     cb(null, true);

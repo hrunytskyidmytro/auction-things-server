@@ -1,6 +1,6 @@
-module.exports = (role) => {
+module.exports = (allowedRoles) => {
   return (req, res, next) => {
-    if (req.user.role !== role && req.user.role !== "ADMIN") {
+    if (!allowedRoles.includes(req.userData.role)) {
       return res.status(403).json({ message: "Доступ заборонено!" });
     }
     next();

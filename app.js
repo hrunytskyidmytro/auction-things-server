@@ -15,6 +15,8 @@ const userRoutes = require("./routes/user-route");
 const passwordResetRoutes = require("./routes/password-reset-route");
 
 const lotRoutes = require("./routes/lot-route");
+const categoryRoutes = require("./routes/category-route");
+const bidRoutes = require("./routes/bid-route");
 
 const app = express();
 
@@ -31,6 +33,10 @@ app.use("/api/user", userRoutes);
 app.use("/api/password", passwordResetRoutes);
 
 app.use("/api/lots", lotRoutes);
+
+app.use("/api/categories", categoryRoutes);
+
+app.use("/api/bids", bidRoutes);
 
 app.use((req, res, next) => {
   const error = HttpError.notFound("Не вдалося знайти маршрут.");

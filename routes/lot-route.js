@@ -6,31 +6,46 @@ const checkAuth = require("../middleware/check-auth");
 const checkRole = require("../middleware/check-role");
 const fileUpload = require("../middleware/file-upload");
 
-const { validateSignUp } = require("../validators/sign-up-validation");
+const { validateLot } = require("../validators/lot-validation");
 const validationErrorHandler = require("../middleware/validation-error-handler");
 
 router.post(
   "/",
-  fileUpload.single("image"),
+  fileUpload.array("images", 5),
   checkAuth,
   checkRole(["ADMIN", "SELLER"]),
+  validateLot,
+  validationErrorHandler,
   lotController.createLot
 );
 
-router.put(
+router.patch(
   "/:id",
   checkAuth,
   checkRole(["ADMIN", "SELLER"]),
+  validateLot,
+  validationErrorHandler,
   lotController.updateLot
 );
 
 router.delete("/:id", checkAuth, checkRole("ADMIN"), lotController.deleteLot);
-router.put("/:id/open", checkAuth, checkRole("SELLER"), lotController.openLot);
-router.put(
+
+router.patch(
+  "/:id/open",
+  checkAuth,
+  checkRole(["ADMIN", "SELLER"]),
+  lotController.openLot
+);
+
+router.patch(
   "/:id/close",
   checkAuth,
-  checkRole("SELLER"),
+  checkRole(["ADMIN", "SELLER"]),
   lotController.closeLot
 );
+
+router.get("/", lotController.getAllLots);
+
+router.get("/:id/history", lotController.getLotHistory);
 
 module.exports = router;

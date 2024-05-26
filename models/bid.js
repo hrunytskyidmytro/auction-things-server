@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0.0,
       },
       userId: DataTypes.INTEGER,
-      itemId: DataTypes.INTEGER,
+      lotId: DataTypes.INTEGER,
     },
     {
       sequelize,

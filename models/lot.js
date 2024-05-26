@@ -33,7 +33,10 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0.0,
       },
       endDate: DataTypes.DATE,
-      imageUrl: DataTypes.STRING,
+      imageUrls: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+      },
       status: {
         type: DataTypes.ENUM("OPEN", "CLOSED", "PENDING"),
         defaultValue: "PENDING",

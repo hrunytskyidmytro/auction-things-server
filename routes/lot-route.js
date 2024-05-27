@@ -9,11 +9,17 @@ const fileUpload = require("../middleware/file-upload");
 const { validateLot } = require("../validators/lot-validation");
 const validationErrorHandler = require("../middleware/validation-error-handler");
 
+const { USER_ROLES } = require("../constants/role-constants");
+
+router.get("/", lotController.getAllLots);
+
+router.get("/:id", checkAuth, lotController.getLotById);
+
 router.post(
   "/",
   fileUpload.array("images", 5),
   checkAuth,
-  checkRole(["ADMIN", "SELLER"]),
+  checkRole([USER_ROLES.admin, USER_ROLES.seller]),
   validateLot,
   validationErrorHandler,
   lotController.createLot
@@ -21,30 +27,34 @@ router.post(
 
 router.patch(
   "/:id",
+  fileUpload.array("images", 5),
   checkAuth,
-  checkRole(["ADMIN", "SELLER"]),
+  checkRole([USER_ROLES.admin, USER_ROLES.seller]),
   validateLot,
   validationErrorHandler,
   lotController.updateLot
 );
 
-router.delete("/:id", checkAuth, checkRole("ADMIN"), lotController.deleteLot);
+router.delete(
+  "/:id",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  lotController.deleteLot
+);
 
 router.patch(
   "/:id/open",
   checkAuth,
-  checkRole(["ADMIN", "SELLER"]),
+  checkRole([USER_ROLES.admin, USER_ROLES.seller]),
   lotController.openLot
 );
 
 router.patch(
   "/:id/close",
   checkAuth,
-  checkRole(["ADMIN", "SELLER"]),
+  checkRole([USER_ROLES.admin, USER_ROLES.seller]),
   lotController.closeLot
 );
-
-router.get("/", lotController.getAllLots);
 
 router.get("/:id/history", lotController.getLotHistory);
 

@@ -103,12 +103,14 @@ class LotController {
       description,
       startingPrice,
       endDate,
-      imageUrl,
       categoryId,
       buyNowPrice,
       bidIncrement,
       reservePrice,
+      existingImages,
     } = req.body;
+
+    const newImages = req.files;
 
     try {
       const lot = await Lot.findByPk(lotId);
@@ -196,11 +198,21 @@ class LotController {
         );
       }
 
+      let updatedImageUrls = existingImages ? existingImages : lot.imageUrl;
+      if (newImages && newImages.length > 0) {
+        const newImagePaths = newImages.map((file) => file.path);
+        updatedImageUrls = updatedImageUrls.concat(newImagePaths);
+      }
+
+      updatedImageUrls = updatedImageUrls.filter((url) =>
+        existingImages.includes(url)
+      );
+
       lot.title = title || lot.title;
       lot.description = description || lot.description;
       lot.startingPrice = startingPrice || lot.startingPrice;
       lot.endDate = endDate || lot.endDate;
-      lot.imageUrl = imageUrl || lot.imageUrl;
+      lot.imageUrls = updatedImageUrls;
       lot.categoryId = categoryId || lot.categoryId;
       lot.buyNowPrice = buyNowPrice || lot.buyNowPrice;
       lot.bidIncrement = bidIncrement || lot.bidIncrement;
@@ -347,6 +359,29 @@ class LotController {
       next(
         HttpError.internalServerError(
           "Не вдалося отримати лоти. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async getLotById(req, res, next) {
+    const lotId = req.params.id;
+
+    try {
+      const lot = await Lot.findByPk(lotId, {
+        // include: [{ model: Category, as: "category" }],
+      });
+
+      if (!lot) {
+        return next(HttpError.notFound("Лот не знайдено."));
+      }
+
+      res.status(200).json(lot);
+    } catch (error) {
+      console.log(error.message);
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати лот. Будь ласка, спробуйте пізніше."
         )
       );
     }

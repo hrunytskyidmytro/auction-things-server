@@ -1,4 +1,4 @@
-const { Category } = require("../models");
+const { Category, Lot } = require("../models");
 const HttpError = require("../errors/http-error");
 
 class CategoryController {
@@ -40,6 +40,39 @@ class CategoryController {
       next(
         HttpError.internalServerError(
           "Не вдалося отримати категорії. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async deleteCategory(req, res, next) {
+    const categoryId = req.params.id;
+
+    try {
+      const category = await Category.findByPk(categoryId);
+
+      if (!category) {
+        return next(HttpError.notFound("Категорії не знайдено."));
+      }
+
+      const linkedLots = await Lot.findAll({
+        where: { categoryId: categoryId },
+      });
+
+      if (linkedLots.length > 0) {
+        return next(
+          HttpError.conflict(
+            "Категорія не може бути видалена, оскільки вона використовується в лотах."
+          )
+        );
+      }
+
+      await category.destroy();
+      res.json({ message: "Категорію успішно видалено." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося видалити категорію. Будь ласка, спробуйте пізніше."
         )
       );
     }

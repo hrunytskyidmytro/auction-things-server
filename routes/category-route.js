@@ -8,15 +8,29 @@ const checkRole = require("../middleware/check-role");
 const { validateCategory } = require("../validators/category-validation");
 const validationErrorHandler = require("../middleware/validation-error-handler");
 
+const { USER_ROLES } = require("../constants/role-constants");
+
+router.get(
+  "/",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  categoryController.getAllCategories
+);
+
 router.post(
   "/",
   checkAuth,
-  checkRole("ADMIN"),
+  checkRole(USER_ROLES.admin),
   validateCategory,
   validationErrorHandler,
   categoryController.createCategory
 );
 
-router.get("/", categoryController.getAllCategories);
+router.delete(
+  "/:id",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  categoryController.deleteCategory
+);
 
 module.exports = router;

@@ -63,6 +63,47 @@ class BidController {
       );
     }
   }
+
+  async getAllBids(req, res, next) {
+    try {
+      const bids = await Bid.findAll();
+      res.json(bids);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати ставки. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async deleteBid(req, res, next) {
+    const bidId = req.params.id;
+
+    try {
+      const bid = await Bid.findByPk(bidId);
+
+      if (!bid) {
+        return next(HttpError.notFound("Ставка не знайдена."));
+      }
+
+      const lot = await Lot.findByPk(bid.lotId);
+
+      if (!lot) {
+        return next(HttpError.notFound("Лот не знайдено."));
+      }
+
+      await bid.destroy();
+
+      res.json({ message: "Ставку успішно видалено." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося видалити ставку. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
 }
 
 module.exports = new BidController();

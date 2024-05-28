@@ -234,6 +234,40 @@ class UserController {
       role: existingUser.role,
     });
   }
+
+  async getAllUsers(req, res, next) {
+    try {
+      const users = await User.findAll();
+      res.json(users);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати користувачів. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async deleteUser(req, res, next) {
+    const userId = req.params.id;
+
+    try {
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return next(HttpError.notFound("Користувача не знайдено."));
+      }
+
+      await user.destroy();
+      res.json({ message: "Користувача успішно видалено." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося видалити користувача. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
 }
 
 module.exports = new UserController();

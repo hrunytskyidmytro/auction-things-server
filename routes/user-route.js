@@ -3,9 +3,26 @@ const router = new Router();
 
 const userController = require("../controllers/user-controller");
 const checkAuth = require("../middleware/check-auth");
+const checkRole = require("../middleware/check-role");
 
 const { validateSignUp } = require("../validators/sign-up-validation");
 const validationErrorHandler = require("../middleware/validation-error-handler");
+
+const { USER_ROLES } = require("../constants/role-constants");
+
+router.get(
+  "/",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  userController.getAllUsers
+);
+
+router.delete(
+  "/:id",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  userController.deleteUser
+);
 
 router.post(
   "/signup",

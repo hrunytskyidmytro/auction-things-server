@@ -24,6 +24,10 @@ class HttpError extends Error {
   static unauthorized(message, data) {
     return new HttpError(message || "Unauthorized", 401, data || null);
   }
+
+  static conflict(message, data) {
+    return new HttpError(message || "Conflict", 409, data || null);
+  }
 }
 
 module.exports = HttpError;

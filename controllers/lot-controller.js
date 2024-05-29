@@ -63,7 +63,7 @@ class LotController {
     if (reservePrice && reservePrice <= startingPrice) {
       return next(
         HttpError.badRequest(
-          "Резервна ціна повинна бути більшою або дорівнювати початковій ціні."
+          "Резервна ціна повинна бути більшою початковій ціні."
         )
       );
     }
@@ -353,7 +353,15 @@ class LotController {
 
   async getAllLots(req, res, next) {
     try {
-      const lots = await Lot.findAll();
+      const lots = await Lot.findAll({
+        include: [
+          {
+            model: User,
+            as: "creator",
+            attributes: ["id", "firstName", "lastName"],
+          },
+        ],
+      });
       res.json(lots);
     } catch (error) {
       next(

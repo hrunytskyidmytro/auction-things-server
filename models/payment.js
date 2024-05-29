@@ -17,13 +17,13 @@ module.exports = (sequelize, DataTypes) => {
       userId: DataTypes.INTEGER,
       lotId: DataTypes.INTEGER,
       status: {
-        type: DataTypes.ENUM(
-          "PENDING",
-          "COMPLETED",
-          "FAILED",
-          "REFUNDED"
-        ),
+        type: DataTypes.ENUM("PENDING", "COMPLETED", "FAILED", "REFUNDED"),
         allowNull: false,
+      },
+      commission: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.0,
       },
     },
     {

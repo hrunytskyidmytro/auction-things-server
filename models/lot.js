@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "lotId",
         as: "watchlistUsers",
       });
+      Lot.belongsTo(models.User, {
+        foreignKey: "userId",
+        as: "creator", 
+      });
     }
   }
   Lot.init(

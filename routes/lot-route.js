@@ -13,7 +13,7 @@ const { USER_ROLES } = require("../constants/role-constants");
 
 router.get("/", lotController.getAllLots);
 
-router.get("/:id", checkAuth, lotController.getLotById);
+router.get("/:id", lotController.getLotById);
 
 router.post(
   "/",

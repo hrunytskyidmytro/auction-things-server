@@ -377,7 +377,18 @@ class LotController {
 
     try {
       const lot = await Lot.findByPk(lotId, {
-        // include: [{ model: Category, as: "category" }],
+        include: [
+          // {
+          //   model: Category,
+          //   as: "category",
+          //   attributes: ["id", "name", "description"],
+          // },
+          {
+            model: User,
+            as: "creator",
+            attributes: ["id", "firstName", "lastName"],
+          },
+        ],
       });
 
       if (!lot) {

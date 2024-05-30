@@ -2,9 +2,26 @@ const { Bid, Lot, AuctionHistory } = require("../models");
 const HttpError = require("../errors/http-error");
 
 class BidController {
+  async getAllBids(req, res, next) {
+    try {
+      const bids = await Bid.findAll();
+      res.json(bids);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати ставки. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
   async createBid(req, res, next) {
     const { amount } = req.body;
     const lotId = req.params.id;
+
+    if (!req.userData) {
+      return next(HttpError.unauthorized("Користувач не авторизований."));
+    }
 
     try {
       const lot = await Lot.findByPk(lotId);
@@ -43,6 +60,7 @@ class BidController {
 
       const oldPrice = lot.currentPrice;
       lot.currentPrice = amount;
+      lot.bidCount += 1;
       await lot.save();
 
       await AuctionHistory.create({
@@ -59,19 +77,6 @@ class BidController {
       next(
         HttpError.internalServerError(
           "Не вдалося створити ставку. Будь ласка, спробуйте пізніше."
-        )
-      );
-    }
-  }
-
-  async getAllBids(req, res, next) {
-    try {
-      const bids = await Bid.findAll();
-      res.json(bids);
-    } catch (error) {
-      next(
-        HttpError.internalServerError(
-          "Не вдалося отримати ставки. Будь ласка, спробуйте пізніше."
         )
       );
     }

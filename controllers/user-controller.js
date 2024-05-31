@@ -228,6 +228,7 @@ class UserController {
     }
 
     return res.status(200).json({
+      id: existingUser.id,
       firstName: existingUser.firstName,
       lastName: existingUser.lastName,
       email: existingUser.email,

@@ -1,4 +1,6 @@
 const { Bid, Lot, AuctionHistory } = require("../models");
+const { Op } = require("sequelize");
+
 const HttpError = require("../errors/http-error");
 
 class BidController {
@@ -16,8 +18,7 @@ class BidController {
   }
 
   async createBid(req, res, next) {
-    const { amount } = req.body;
-    const lotId = req.params.id;
+    const { amount, lotId } = req.body;
 
     if (!req.userData) {
       return next(HttpError.unauthorized("Користувач не авторизований."));
@@ -44,10 +45,13 @@ class BidController {
         );
       }
 
-      if (amount <= lot.currentPrice) {
+      const minBidAmount =
+        parseFloat(lot.currentPrice) + parseFloat(lot.bidIncrement);
+
+      if (amount < minBidAmount) {
         return next(
           HttpError.badRequest(
-            "Сума ставки повинна бути більшою за поточну ціну лоту."
+            `Сума ставки повинна бути не меншою за ${minBidAmount} грн.`
           )
         );
       }
@@ -72,7 +76,7 @@ class BidController {
 
       res
         .status(201)
-        .json({ message: "Ставка успішно створена.", bid: newBid });
+        .json({ message: "Ставка успішно зроблена!", bid: newBid });
     } catch (error) {
       next(
         HttpError.internalServerError(
@@ -98,10 +102,28 @@ class BidController {
         return next(HttpError.notFound("Лот не знайдено."));
       }
 
+      lot.bidCount -= 1;
+
+      const lastBid = await Bid.findOne({
+        where: {
+          lotId: bid.lotId,
+          id: { [Op.ne]: bid.id },
+        },
+        order: [["createdAt", "DESC"]],
+      });
+
+      if (lastBid) {
+        lot.currentPrice = lastBid.amount;
+      } else {
+        lot.currentPrice = lot.startingPrice;
+      }
+
+      await lot.save();
       await bid.destroy();
 
       res.json({ message: "Ставку успішно видалено." });
     } catch (error) {
+      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося видалити ставку. Будь ласка, спробуйте пізніше."

@@ -10,7 +10,7 @@ const validationErrorHandler = require("../middleware/validation-error-handler")
 
 const { USER_ROLES } = require("../constants/role-constants");
 
-router.post("/:id", checkAuth, bidController.createBid);
+router.post("/", checkAuth, bidController.createBid);
 
 router.get("/", checkAuth, bidController.getAllBids);
 

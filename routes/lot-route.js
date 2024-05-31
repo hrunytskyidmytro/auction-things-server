@@ -15,6 +15,10 @@ router.get("/", lotController.getAllLots);
 
 router.get("/:id", lotController.getLotById);
 
+router.get("/:id/bids", lotController.getLotBids);
+
+router.patch("/:id/close", checkAuth, lotController.closeLot);
+
 router.post(
   "/",
   fileUpload.array("images", 5),
@@ -47,13 +51,6 @@ router.patch(
   checkAuth,
   checkRole([USER_ROLES.admin, USER_ROLES.seller]),
   lotController.openLot
-);
-
-router.patch(
-  "/:id/close",
-  checkAuth,
-  checkRole([USER_ROLES.admin, USER_ROLES.seller]),
-  lotController.closeLot
 );
 
 router.get("/:id/history", lotController.getLotHistory);

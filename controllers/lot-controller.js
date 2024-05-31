@@ -4,6 +4,35 @@ const HttpError = require("../errors/http-error");
 const nodemailer = require("nodemailer");
 
 class LotController {
+  constructor() {
+    this.closeLot = this.closeLot.bind(this);
+    this.sendEmail = this.sendEmail.bind(this);
+  }
+
+  async sendEmail(to, subject, text) {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      debug: true,
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to,
+      subject,
+      text,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.log("Не вдалося надіслати електронного листа:", error);
+    }
+  }
+
   async createLot(req, res, next) {
     if (!req.files || req.files.length === 0) {
       return next(HttpError.badRequest("Зображення не надано."));
@@ -294,21 +323,24 @@ class LotController {
 
   async closeLot(req, res, next) {
     const lotId = req.params.id;
+    console.log("ID Lot ", lotId);
 
     try {
       const lot = await Lot.findByPk(lotId, {
         include: [Bid],
       });
 
+      console.log("Just Lot ", lot);
+
       if (!lot) {
         return next(HttpError.notFound("Лот не знайдено."));
       }
 
-      if (lot.userId !== req.userData.userId) {
-        return next(
-          HttpError.forbidden("У вас немає дозволу на закриття цього лоту.")
-        );
-      }
+      // if (lot.userId !== req.userData.userId) {
+      //   return next(
+      //     HttpError.forbidden("У вас немає дозволу на закриття цього лоту.")
+      //   );
+      // }
 
       const bids = lot.Bids;
       if (bids.length > 0) {
@@ -343,6 +375,7 @@ class LotController {
 
       res.json(lot);
     } catch (error) {
+      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося закрити лот. Будь ласка, спробуйте пізніше."
@@ -406,6 +439,37 @@ class LotController {
     }
   }
 
+  async getLotBids(req, res, next) {
+    const lotId = req.params.id;
+
+    try {
+      const lot = await Lot.findByPk(lotId, {
+        include: [
+          {
+            model: Bid,
+            attributes: ["id", "amount", "createdAt"],
+            include: [
+              { model: User, attributes: ["id", "firstName", "lastName"] },
+            ],
+          },
+        ],
+      });
+
+      if (!lot) {
+        return next(HttpError.notFound("Лот не знайдено."));
+      }
+
+      const bids = lot.Bids;
+      res.json(bids);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати ставки для цього лоту. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
   async getLotHistory(req, res, next) {
     const lotId = req.params.id;
 
@@ -422,29 +486,6 @@ class LotController {
           "Не вдалося отримати історію лоту. Будь ласка, спробуйте пізніше."
         )
       );
-    }
-  }
-
-  async sendEmail(to, subject, text) {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to,
-      subject,
-      text,
-    };
-
-    try {
-      await transporter.sendMail(mailOptions);
-    } catch (error) {
-      console.log("Не вдалося надіслати електронного листа:", error);
     }
   }
 }

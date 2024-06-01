@@ -17,8 +17,6 @@ router.get("/:id", lotController.getLotById);
 
 router.get("/:id/bids", lotController.getLotBids);
 
-router.patch("/:id/close", checkAuth, lotController.closeLot);
-
 router.post(
   "/",
   fileUpload.array("images", 5),

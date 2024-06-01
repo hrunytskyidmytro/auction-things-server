@@ -102,7 +102,9 @@ class BidController {
         return next(HttpError.notFound("Лот не знайдено."));
       }
 
-      lot.bidCount -= 1;
+      if (lot.bidCount > 0) {
+        lot.bidCount -= 1;
+      }
 
       const lastBid = await Bid.findOne({
         where: {

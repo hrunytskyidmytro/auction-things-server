@@ -1,7 +1,8 @@
 const bcrypt = require("bcrypt");
-const nodemailer = require("nodemailer");
 
 const { User } = require("../models");
+
+const emailService = require("../services/email-service");
 
 class PinCodeService {
   static async generatePinCode() {
@@ -52,22 +53,11 @@ class PinCodeService {
     const pinCodeData = await this.generatePinCode();
     await this.savePinCode(userId, pinCodeData);
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: email,
-      subject: "Ваш пін-код",
-      text: `Ваш пін-код: ${pinCodeData.pinCode}`,
-    };
-
-    await transporter.sendMail(mailOptions);
+    await emailService.sendEmail(
+      email,
+      "Ваш пін-код",
+      `Ваш пін-код: ${pinCodeData.pinCode}`
+    );
 
     user.pinCodeSendAttempts += 1;
     await user.save();

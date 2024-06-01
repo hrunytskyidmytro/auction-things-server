@@ -6,5 +6,6 @@ const checkAuth = require("../middleware/check-auth");
 
 router.post("/add", checkAuth, watchlistController.addToWatchlist);
 router.get("/:userId", checkAuth, watchlistController.getWatchlist);
+router.get("/:id/check-exist", checkAuth, watchlistController.checkWatchlist);
 
 module.exports = router;

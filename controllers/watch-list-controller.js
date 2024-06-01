@@ -21,6 +21,21 @@ class WatchlistController {
       next(HttpError.internalServerError(error.message));
     }
   }
+
+  async checkWatchlist(req, res, next) {
+    const userId = req.userData.userId;
+    const lotId = req.params.id;
+
+    try {
+      const watchlist = await Watchlist.findOne({
+        where: { lotId, userId },
+      });
+
+      res.status(200).json({ exist: !!watchlist });
+    } catch (error) {
+      next(HttpError.internalServerError(error.message));
+    }
+  }
 }
 
 module.exports = new WatchlistController();

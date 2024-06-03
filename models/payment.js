@@ -15,15 +15,27 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: 0.0,
       },
       userId: DataTypes.INTEGER,
-      lotId: DataTypes.INTEGER,
+      lotId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       status: {
         type: DataTypes.ENUM("PENDING", "COMPLETED", "FAILED", "REFUNDED"),
         allowNull: false,
+      },
+      type: {
+        type: DataTypes.ENUM("DEPOSIT", "PURCHASE", "WITHDRAWAL", "SALE"),
+        allowNull: false,
+        defaultValue: "PURCHASE",
       },
       commission: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
         defaultValue: 0.0,
+      },
+      sessionId: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
     },
     {

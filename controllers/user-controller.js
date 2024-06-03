@@ -233,6 +233,7 @@ class UserController {
       lastName: existingUser.lastName,
       email: existingUser.email,
       role: existingUser.role,
+      balance: existingUser.balance,
     });
   }
 

@@ -2,6 +2,8 @@ const { User } = require("../models");
 
 const emailService = require("../services/email-service");
 
+const Decimal = require("decimal.js");
+
 class LotService {
   async closeLot(lot) {
     if (
@@ -34,7 +36,7 @@ class LotService {
       await emailService.sendEmail(
         winner.email,
         "Вітаємо!",
-        `Ви виграли лот: ${lot.title}`
+        `Ви виграли лот: ${lot.title}. Перейдіть за посиланням для оформлення замовлення: http://localhost:3000/payment?lotId=${lot.id}.`
       );
     }
 
@@ -46,6 +48,15 @@ class LotService {
         "Дякуємо за участь.",
         `Ви не виграли лот: ${lot.title}`
       );
+    }
+
+    for (const bid of losingBids) {
+      const user = await User.findByPk(bid.userId);
+      bid.amount = new Decimal(bid.amount);
+      user.balance = new Decimal(user.balance);
+
+      user.balance = user.balance.add(bid.amount);
+      await user.save();
     }
   }
 

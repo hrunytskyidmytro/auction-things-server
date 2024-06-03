@@ -20,12 +20,6 @@ class LotController {
       reservePrice,
     } = req.body;
 
-    if (new Date(endDate) <= new Date()) {
-      return next(
-        HttpError.badRequest("Дата закінчення повинна бути у майбутньому.")
-      );
-    }
-
     const existingLot = await Lot.findOne({ where: { title } });
 
     if (existingLot) {
@@ -36,6 +30,12 @@ class LotController {
       );
     }
 
+    if (new Date(endDate) <= new Date()) {
+      return next(
+        HttpError.badRequest("Дата закінчення повинна бути у майбутньому.")
+      );
+    }
+    
     const category = await Category.findByPk(categoryId);
 
     if (!category) {
@@ -399,6 +399,20 @@ class LotController {
       next(
         HttpError.internalServerError(
           "Не вдалося отримати історію лоту. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async buyNow(req, res, next) {
+    try {
+      const { lotId } = req.body;
+
+      res.json({ redirectUrl: `http://localhost:3000/payment?lotId=${lotId}` });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося здійснити купівлю. Будь ласка, спробуйте пізніше."
         )
       );
     }

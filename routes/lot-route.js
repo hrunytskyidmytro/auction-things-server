@@ -17,6 +17,8 @@ router.get("/:id", lotController.getLotById);
 
 router.get("/:id/bids", lotController.getLotBids);
 
+router.post("/buy-now", checkAuth, lotController.buyNow);
+
 router.post(
   "/",
   fileUpload.array("images", 5),

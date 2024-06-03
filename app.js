@@ -19,6 +19,8 @@ const categoryRoutes = require("./routes/category-route");
 const bidRoutes = require("./routes/bid-route");
 const watchlistRoutes = require("./routes/watch-list-route");
 
+const paymentRoutes = require("./routes/payment-route");
+
 const app = express();
 
 app.use(cors());
@@ -40,6 +42,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/bids", bidRoutes);
 
 app.use("/api/watchlists", watchlistRoutes);
+
+app.use("/api/payments", paymentRoutes);
 
 app.use((req, res, next) => {
   const error = HttpError.notFound("Не вдалося знайти маршрут.");

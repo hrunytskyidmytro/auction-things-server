@@ -1,5 +1,7 @@
-const { Bid, Lot, AuctionHistory } = require("../models");
+const { Bid, Lot, AuctionHistory, User } = require("../models");
 const { Op } = require("sequelize");
+
+const Decimal = require("decimal.js");
 
 const HttpError = require("../errors/http-error");
 
@@ -20,15 +22,41 @@ class BidController {
   async createBid(req, res, next) {
     const { amount, lotId } = req.body;
 
-    if (!req.userData) {
-      return next(HttpError.unauthorized("Користувач не авторизований."));
-    }
-
     try {
+      if (!req.userData) {
+        return next(HttpError.unauthorized("Користувач не авторизований."));
+      }
+
+      const user = await User.findByPk(req.userData.userId);
+
+      if (!user) {
+        return next(HttpError.notFound("Коистувача не знайдено."));
+      }
+
       const lot = await Lot.findByPk(lotId);
 
       if (!lot) {
         return next(HttpError.notFound("Лот не знайдено."));
+      }
+
+      if (new Decimal(user.balance).isZero()) {
+        return next(
+          HttpError.forbidden(
+            "Баланс порожній. Будь ласка, поповніть, щоб приймати участь в ставках."
+          )
+        );
+      }
+
+      if (
+        new Decimal(user.balance).lessThanOrEqualTo(
+          new Decimal(lot.currentPrice)
+        )
+      ) {
+        return next(
+          HttpError.forbidden(
+            "Недостатньо коштів на балансі. Будь ласка, поповніть свій баланс."
+          )
+        );
       }
 
       if (lot.userId === req.userData.userId) {
@@ -74,10 +102,14 @@ class BidController {
         newPrice: amount,
       });
 
+      user.balance -= amount;
+      await user.save();
+
       res
         .status(201)
         .json({ message: "Ставка успішно зроблена!", bid: newBid });
     } catch (error) {
+      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося створити ставку. Будь ласка, спробуйте пізніше."

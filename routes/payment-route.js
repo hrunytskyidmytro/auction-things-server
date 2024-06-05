@@ -10,6 +10,8 @@ router.post(
   paymentController.createCheckoutSession
 );
 
+router.post("/confirm-purchase", checkAuth, paymentController.confirmPurchase);
+
 router.post("/add-funds", checkAuth, paymentController.addFunds);
 
 router.post("/withdraw-funds", checkAuth, paymentController.withdrawFunds);

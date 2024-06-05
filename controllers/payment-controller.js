@@ -1,6 +1,6 @@
 const { Lot, User, Payment } = require("../models");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const stripeService = require("../services/stripe-service");
+const paymentService = require("../services/payment-service");
 
 const Decimal = require("decimal.js");
 
@@ -17,67 +17,87 @@ class PaymentController {
         return next(HttpError.notFound("Лот не знайдено."));
       }
 
+      if (lot.userId === req.userData.userId) {
+        return next(
+          HttpError.forbidden("Ви не можете придбати свій власний лот.")
+        );
+      }
+
       let user;
+      let price;
       if (lot.winnerId) {
         user = await User.findByPk(lot.winnerId);
 
         if (!user) {
           return next(HttpError.notFound("Переможець не знайдений."));
         }
+
+        price = lot.currentPrice;
       } else {
-        // user = req.userData.userId;
         user = await User.findByPk(req.userData.userId);
 
         if (!user) {
           return next(HttpError.unauthorized("Користувач не авторизований."));
         }
+
+        price = lot.buyNowPrice;
       }
 
       const session = await stripeService.createCheckoutSession(
-        lot.buyNowPrice,
+        price,
         user,
         lot.title,
-        "http://localhost:3000/",
-        "http://localhost:3000/"
+        process.env.CLIENT_URL + `/success-page?lotId=${lot.id}`,
+        process.env.CLIENT_URL
       );
 
-      if (lot.status !== "CLOSED") {
-        lot.status = "CLOSED";
-        lot.winnerId = user.id;
-        await lot.save();
-
-        lot.buyNowPrice = new Decimal(lot.buyNowPrice);
-        const commission = lot.buyNowPrice.times(0.05);
-        const amountToSeller = lot.buyNowPrice.minus(commission);
-
-        const seller = await User.findByPk(lot.userId);
-        seller.balance = new Decimal(amountToSeller);
-        await seller.save();
-
-        await Payment.create({
-          amount: lot.buyNowPrice,
-          userId: seller.id,
-          lotId: lot.id,
-          status: "COMPLETED",
-          type: "SALE",
-          commission: commission,
-          sessionId: session.id,
-        });
-      }
-
-      const bids = await lot.getBids();
-      const losingBids = bids.filter((bid) => bid.userId !== user.id);
-
-      for (const bid of losingBids) {
-        const losingUser = await User.findByPk(bid.userId);
-        const amountDecimal = new Decimal(bid.amount);
-        losingUser.balance = new Decimal(losingUser.balance);
-
-        losingUser.balance = losingUser.balance.add(amountDecimal);
-        await losingUser.save();
-      }
+      console.log("SESSIONS ", session);
 
       res.send({ id: session.id });
+    } catch (error) {
+      res.status(500).send({ error: error.message });
+    }
+  }
+
+  async confirmPurchase(req, res, next) {
+    const { lotId } = req.body;
+
+    try {
+      const lot = await Lot.findByPk(lotId);
+
+      if (!lot) {
+        return next(HttpError.notFound("Лот не знайдено."));
+      }
+
+      if (lot.userId === req.userData.userId) {
+        return next(
+          HttpError.forbidden("Ви не можете придбати свій власний лот.")
+        );
+      }
+
+      let user;
+      let price;
+      if (lot.winnerId) {
+        user = await User.findByPk(lot.winnerId);
+
+        if (!user) {
+          return next(HttpError.notFound("Переможець не знайдений."));
+        }
+
+        price = lot.currentPrice;
+      } else {
+        user = await User.findByPk(req.userData.userId);
+
+        if (!user) {
+          return next(HttpError.unauthorized("Користувач не авторизований."));
+        }
+
+        price = lot.buyNowPrice;
+      }
+
+      await paymentService.confirmPayment(lot, user, price);
+
+      res.send({ message: "Покупка успішно підтверджена." });
     } catch (error) {
       res.status(500).send({ error: error.message });
     }

@@ -43,7 +43,7 @@ class StripeService {
       customer: customer,
       receipt_email: email,
       confirm: true,
-      return_url: "http://localhost:3000/",
+      return_url: process.env.CLIENT_URL,
     });
 
     return paymentIntent;

@@ -1,8 +1,5 @@
 const { User } = require("../models");
-
 const emailService = require("../services/email-service");
-
-const Decimal = require("decimal.js");
 
 class LotService {
   async closeLot(lot) {
@@ -48,15 +45,6 @@ class LotService {
         "Дякуємо за участь.",
         `Ви не виграли лот: ${lot.title}`
       );
-    }
-
-    for (const bid of losingBids) {
-      const user = await User.findByPk(bid.userId);
-      bid.amount = new Decimal(bid.amount);
-      user.balance = new Decimal(user.balance);
-
-      user.balance = user.balance.add(bid.amount);
-      await user.save();
     }
   }
 

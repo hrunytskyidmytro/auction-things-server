@@ -35,7 +35,7 @@ class LotController {
         HttpError.badRequest("Дата закінчення повинна бути у майбутньому.")
       );
     }
-    
+
     const category = await Category.findByPk(categoryId);
 
     if (!category) {
@@ -294,6 +294,11 @@ class LotController {
 
   async getAllLots(req, res, next) {
     try {
+      // const { sortBy, sortOrder, page, limit } = req.query;
+
+      // const pageNum = isNaN(page) || page < 1 ? 1 : parseInt(page);
+      // const limitNum = isNaN(limit) || limit < 1 ? 10 : parseInt(limit);
+
       const lots = await Lot.findAll({
         include: [
           {
@@ -306,12 +311,17 @@ class LotController {
             include: [{ model: User }],
           },
         ],
+        // order: [[sortBy || "createdAt", sortOrder || "DESC"]],
+        // offset: (pageNum - 1) * limitNum,
+        // limit: limitNum || 10,
       });
 
+      // const total = await Lot.count();
       await lotService.closeLotArray(lots);
 
       res.status(200).json(lots);
     } catch (error) {
+      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося отримати лоти. Будь ласка, спробуйте пізніше."

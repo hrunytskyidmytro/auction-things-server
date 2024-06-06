@@ -27,7 +27,9 @@ module.exports = (req, res, next) => {
     req.userData = { userId: decodedToken.userId, role: decodedToken.role };
     next();
   } catch (err) {
-    const error = HttpError.unauthorized("Помилка автентифікації!");
+    const error = HttpError.unauthorized(
+      "Помилка автентифікації! Будь ласка, авторизуйтесь."
+    );
     return next(error);
   }
 };

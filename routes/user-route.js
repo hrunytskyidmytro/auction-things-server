@@ -17,18 +17,26 @@ router.get(
   userController.getAllUsers
 );
 
-router.delete(
-  "/:id",
-  checkAuth,
-  checkRole(USER_ROLES.admin),
-  userController.deleteUser
-);
-
 router.post(
   "/signup",
   validateSignUp,
   validationErrorHandler,
   userController.signUp
+);
+
+router.patch(
+  "/:id",
+  checkAuth,
+  // validateSignUp,
+  // validationErrorHandler,
+  userController.updateUser
+);
+
+router.delete(
+  "/:id",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  userController.deleteUser
 );
 
 router.post("/login", userController.logIn);

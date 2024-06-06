@@ -232,9 +232,15 @@ class UserController {
       id: existingUser.id,
       firstName: existingUser.firstName,
       lastName: existingUser.lastName,
+      patronymic: existingUser.patronymic,
+      phoneNumber: existingUser.phoneNumber,
       email: existingUser.email,
       role: existingUser.role,
       balance: existingUser.balance,
+      companyName: existingUser.companyName,
+      companySite: existingUser.companySite,
+      position: existingUser.position,
+      createdAt: existingUser.createdAt,
     });
   }
 
@@ -246,6 +252,37 @@ class UserController {
       next(
         HttpError.internalServerError(
           "Не вдалося отримати користувачів. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async updateUser(req, res, next) {
+    const userId = req.params.id;
+    const { firstName, lastName, patronymic, email, phoneNumber, companySite } =
+      req.body;
+
+    try {
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return next(HttpError.notFound("Користувача не знайдено."));
+      }
+
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.patronymic = patronymic;
+      user.email = email;
+      user.phoneNumber = phoneNumber;
+      user.companySite = companySite;
+
+      await user.save();
+
+      res.json({ message: "Дані успішно оновлено." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося оновити дані. Будь ласка, спробуйте пізніше."
         )
       );
     }

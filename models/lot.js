@@ -4,11 +4,6 @@ module.exports = (sequelize, DataTypes) => {
   class Lot extends Model {
     static associate(models) {
       Lot.hasMany(models.Bid, { foreignKey: "lotId" });
-      Lot.belongsToMany(models.Category, {
-        through: "LotCategories",
-        foreignKey: "lotId",
-        as: "categories",
-      });
       Lot.hasMany(models.AuctionHistory, { foreignKey: "lotId" });
       Lot.belongsToMany(models.User, {
         through: "Watchlist",
@@ -17,7 +12,11 @@ module.exports = (sequelize, DataTypes) => {
       });
       Lot.belongsTo(models.User, {
         foreignKey: "userId",
-        as: "creator", 
+        as: "creator",
+      });
+      Lot.belongsTo(models.Category, {
+        foreignKey: "categoryId",
+        as: "category",
       });
     }
   }

@@ -51,8 +51,6 @@ class PaymentController {
         process.env.CLIENT_URL
       );
 
-      console.log("SESSIONS ", session);
-
       res.send({ id: session.id });
     } catch (error) {
       res.status(500).send({ error: error.message });

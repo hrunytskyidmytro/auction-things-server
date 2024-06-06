@@ -321,7 +321,6 @@ class LotController {
 
       res.status(200).json(lots);
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося отримати лоти. Будь ласка, спробуйте пізніше."

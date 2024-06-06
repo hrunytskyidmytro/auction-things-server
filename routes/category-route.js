@@ -12,10 +12,12 @@ const { USER_ROLES } = require("../constants/role-constants");
 
 router.get(
   "/",
-  checkAuth,
-  checkRole(USER_ROLES.admin),
+  // checkAuth,
+  // checkRole(USER_ROLES.admin),
   categoryController.getAllCategories
 );
+
+router.get("/:id/lots", categoryController.getLotsByCategory);
 
 router.post(
   "/",

@@ -1,7 +1,54 @@
-const { Category, Lot } = require("../models");
+const { Category, Lot, User } = require("../models");
 const HttpError = require("../errors/http-error");
 
 class CategoryController {
+  async getAllCategories(req, res, next) {
+    try {
+      const categories = await Category.findAll();
+
+      res.json(categories);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати категорії. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async getLotsByCategory(req, res, next) {
+    const categoryId = req.params.id;
+
+    try {
+      const category = await Category.findByPk(categoryId, {
+        include: [
+          {
+            model: Lot,
+            as: "lots",
+            include: {
+              model: User,
+              as: "creator",
+              attributes: ["id", "firstName", "lastName"],
+            },
+          },
+        ],
+      });
+
+      if (!category) {
+        return next(HttpError.notFound("Категорія не знайдена."));
+      }
+
+      const lots = category.lots;
+      res.json(lots);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати лоти для цієї категорії. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
   async createCategory(req, res, next) {
     const { name, description } = req.body;
 
@@ -26,20 +73,6 @@ class CategoryController {
       next(
         HttpError.internalServerError(
           "Не вдалося створити категорію. Будь ласка, спробуйте пізніше."
-        )
-      );
-    }
-  }
-
-  async getAllCategories(req, res, next) {
-    try {
-      const categories = await Category.findAll();
-
-      res.json(categories);
-    } catch (error) {
-      next(
-        HttpError.internalServerError(
-          "Не вдалося отримати категорії. Будь ласка, спробуйте пізніше."
         )
       );
     }

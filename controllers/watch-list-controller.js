@@ -25,6 +25,19 @@ class WatchlistController {
   async addToWatchlist(req, res, next) {
     try {
       const { userId, lotId } = req.body;
+      const lot = await Lot.findByPk(lotId);
+
+      if (!lot) {
+        return next(HttpError.notFound("Лот не знайдено."));
+      }
+      if (lot.status === "CLOSED") {
+        return next(
+          HttpError.badRequest(
+            "Неможливо додати закритий лот до списку відстеження."
+          )
+        );
+      }
+
       const watchlist = await Watchlist.create({ userId, lotId });
       res.status(201).json(watchlist);
     } catch (error) {

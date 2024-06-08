@@ -4,9 +4,22 @@ const Decimal = require("decimal.js");
 
 class PaymentService {
   async confirmPayment(lot, user, price) {
+    const existingOrder = await Order.findOne({
+      where: {
+        userId: user.id,
+        lotId: lot.id,
+      },
+    });
+
+    if (existingOrder) {
+      console.log("Замовлення вже існує. Повторне підтвердження неможливе.");
+      return;
+    }
+
     if (lot.status !== "CLOSED") {
       lot.status = "CLOSED";
       lot.winnerId = user.id;
+      lot.endDate = new Date();
       await lot.save();
     }
 

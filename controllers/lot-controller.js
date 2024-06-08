@@ -1,8 +1,7 @@
 const { Lot, Bid, User, Category, AuctionHistory } = require("../models");
 const { Op } = require("sequelize");
-const HttpError = require("../errors/http-error");
-
 const lotService = require("../services/lot-service");
+const HttpError = require("../errors/http-error");
 
 class LotController {
   async createLot(req, res, next) {
@@ -425,7 +424,6 @@ class LotController {
         currentPage: page,
       });
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося отримати лоти. Будь ласка, спробуйте пізніше."
@@ -513,6 +511,180 @@ class LotController {
       next(
         HttpError.internalServerError(
           "Не вдалося отримати історію лоту. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async getLotsByUser(req, res, next) {
+    const userId = req.params.userId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    const sortBy = req.query.sortBy;
+    const search = req.query.search;
+    const currentPriceFrom = parseFloat(req.query.currentPriceFrom);
+    const currentPriceTo = parseFloat(req.query.currentPriceTo);
+    const buyNowPriceFrom = parseFloat(req.query.buyNowPriceFrom);
+    const buyNowPriceTo = parseFloat(req.query.buyNowPriceTo);
+    const dateOption = req.query.dateOption;
+    const categoryIds = req.query.categoryId
+      ? req.query.categoryId.split(",")
+      : [];
+    const statuses = req.query.status ? req.query.status.split(",") : [];
+
+    let order = [];
+
+    if (sortBy === "price_asc") {
+      order = [["currentPrice", "ASC"]];
+    } else if (sortBy === "price_desc") {
+      order = [["currentPrice", "DESC"]];
+    } else if (sortBy === "created_asc") {
+      order = [["createdAt", "ASC"]];
+    } else if (sortBy === "created_desc") {
+      order = [["createdAt", "DESC"]];
+    } else if (sortBy === "end_asc") {
+      order = [["endDate", "ASC"]];
+    } else if (sortBy === "end_desc") {
+      order = [["endDate", "DESC"]];
+    } else if (sortBy === "buy_now_asc") {
+      order = [["buyNowPrice", "ASC"]];
+    } else if (sortBy === "buy_now_desc") {
+      order = [["buyNowPrice", "DESC"]];
+    }
+
+    let where = {
+      userId: userId,
+    };
+
+    if (categoryIds.length > 0) {
+      where.categoryId = {
+        [Op.in]: categoryIds,
+      };
+    }
+
+    if (statuses.length > 0) {
+      where.status = {
+        [Op.in]: statuses,
+      };
+    }
+
+    if (!isNaN(currentPriceFrom) && !isNaN(currentPriceTo)) {
+      where.currentPrice = {
+        [Op.between]: [currentPriceFrom, currentPriceTo],
+      };
+    } else if (!isNaN(currentPriceFrom)) {
+      where.currentPrice = { [Op.gte]: currentPriceFrom };
+    } else if (!isNaN(currentPriceTo)) {
+      where.currentPrice = { [Op.lte]: currentPriceTo };
+    }
+
+    if (!isNaN(buyNowPriceFrom) && !isNaN(buyNowPriceTo)) {
+      where.buyNowPrice = { [Op.between]: [buyNowPriceFrom, buyNowPriceTo] };
+    } else if (!isNaN(buyNowPriceFrom)) {
+      where.buyNowPrice = { [Op.gte]: buyNowPriceFrom };
+    } else if (!isNaN(buyNowPriceTo)) {
+      where.buyNowPrice = { [Op.lte]: buyNowPriceTo };
+    }
+
+    if (dateOption && dateOption !== "all") {
+      const currentDate = new Date();
+      let startDateLot = new Date(currentDate);
+      let endDateLot = new Date();
+
+      if (dateOption === "24_hours") {
+        endDateLot = new Date(currentDate);
+        endDateLot.setHours(endDateLot.getHours() + 24);
+      } else if (dateOption === "7_days") {
+        endDateLot = new Date(currentDate);
+        endDateLot.setDate(endDateLot.getDate() + 7);
+      } else if (dateOption === "30_days") {
+        endDateLot = new Date(currentDate);
+        endDateLot.setDate(endDateLot.getDate() + 30);
+      }
+
+      where.endDate = {
+        [Op.between]: [startDateLot, endDateLot],
+      };
+    }
+
+    if (dateOption === "recently_sold") {
+      const currentDate = new Date();
+      const startDateLot = new Date(currentDate);
+      const endDateLot = new Date(currentDate);
+      endDateLot.setDate(endDateLot.getDate() - 7);
+
+      where.endDate = {
+        [Op.between]: [endDateLot, startDateLot],
+      };
+    }
+
+    if (search) {
+      where.title = { [Op.like]: `%${search}%` };
+    }
+
+    try {
+      const { rows: lots, count: totalItems } = await Lot.findAndCountAll({
+        include: [
+          {
+            model: User,
+            as: "creator",
+            attributes: ["id", "firstName", "lastName"],
+          },
+          {
+            model: Bid,
+            include: [{ model: User }],
+          },
+        ],
+        where,
+        limit,
+        offset,
+        order,
+      });
+
+      res.status(200).json({
+        lots,
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+      });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати лоти користувача. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async getLatestOpenLotsBySeller(req, res, next) {
+    const userId = req.params.userId;
+
+    try {
+      const openLots = await Lot.findAll({
+        where: {
+          userId: userId,
+          status: "OPEN",
+        },
+        include: [
+          {
+            model: User,
+            as: "creator",
+            attributes: ["id", "firstName", "lastName"],
+          },
+          {
+            model: Bid,
+            include: [{ model: User }],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      res.status(200).json(openLots);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати останні відкриті лоти продавця. Будь ласка, спробуйте пізніше."
         )
       );
     }

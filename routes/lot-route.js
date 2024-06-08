@@ -17,6 +17,13 @@ router.get("/:id", lotController.getLotById);
 
 router.get("/:id/bids", lotController.getLotBids);
 
+router.get("/seller/:userId", lotController.getLotsByUser);
+
+router.get(
+  "/seller/:userId/latest-open-lots",
+  lotController.getLatestOpenLotsBySeller
+);
+
 router.post("/buy-now", checkAuth, lotController.buyNow);
 
 router.post(

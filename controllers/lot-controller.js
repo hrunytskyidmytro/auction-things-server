@@ -5,6 +5,7 @@ const emailService = require("../services/email-service");
 const HttpError = require("../errors/http-error");
 const { USER_ROLES } = require("../constants/role-constants");
 const Decimal = require("decimal.js");
+const fs = require("fs");
 
 class LotController {
   async createLot(req, res, next) {
@@ -173,6 +174,12 @@ class LotController {
 
       if (lot.status === "OPEN") {
         return next(HttpError.badRequest("Неможливо видалити відкритий лот."));
+      }
+
+      if (lot.imageUrls && lot.imageUrls.length > 0) {
+        lot.imageUrls.forEach((imageUrl) => {
+          fs.unlinkSync(imageUrl);
+        });
       }
 
       await lot.destroy();
@@ -407,6 +414,7 @@ class LotController {
         currentPage: page,
       });
     } catch (error) {
+      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося отримати лоти. Будь ласка, спробуйте пізніше."
@@ -694,6 +702,35 @@ class LotController {
       next(
         HttpError.internalServerError(
           "Не вдалося отримати останні відкриті лоти продавця. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async getLatestLots(req, res, next) {
+    try {
+      const latestLots = await Lot.findAll({
+        where: { status: "OPEN" },
+        include: [
+          {
+            model: User,
+            as: "creator",
+            attributes: ["id", "firstName", "lastName"],
+          },
+          {
+            model: Bid,
+            include: [{ model: User }],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: 4,
+      });
+
+      res.status(200).json(latestLots);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати останні лоти. Будь ласка, спробуйте пізніше."
         )
       );
     }

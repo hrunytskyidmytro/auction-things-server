@@ -14,6 +14,8 @@ const { USER_ROLES } = require("../constants/role-constants");
 
 router.get("/", lotController.getAllLots);
 
+router.get("/latest-lots", lotController.getLatestLots);
+
 router.get(
   "/admin",
   checkAuth,
@@ -32,6 +34,7 @@ router.get(
   lotController.getLatestOpenLotsBySeller
 );
 
+
 router.post("/buy-now", checkAuth, lotController.buyNow);
 
 router.post(
@@ -46,7 +49,6 @@ router.post(
 
 router.patch(
   "/:id",
-  // fileUpload.array("images", 5),
   checkAuth,
   checkRole([USER_ROLES.admin, USER_ROLES.seller]),
   validateUpdateLot,

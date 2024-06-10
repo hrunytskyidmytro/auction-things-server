@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Lot.hasMany(models.Bid, { foreignKey: "lotId" });
       Lot.hasMany(models.AuctionHistory, { foreignKey: "lotId" });
+      Lot.hasMany(models.Payment, { foreignKey: "lotId" });
       Lot.belongsToMany(models.User, {
         through: "Watchlist",
         foreignKey: "lotId",

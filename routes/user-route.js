@@ -10,6 +10,8 @@ const validationErrorHandler = require("../middleware/validation-error-handler")
 
 const { USER_ROLES } = require("../constants/role-constants");
 
+router.get("/current-user", checkAuth, userController.getCurrentUserInfo);
+
 router.get(
   "/",
   checkAuth,
@@ -24,12 +26,28 @@ router.post(
   userController.signUp
 );
 
+router.get(
+  "/:id",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  userController.getUserById
+);
+
 router.patch(
   "/:id",
   checkAuth,
   // validateSignUp,
   // validationErrorHandler,
   userController.updateUser
+);
+
+router.patch(
+  "/:id",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  // validateSignUp,
+  // validationErrorHandler,
+  userController.updateUserForAdmin
 );
 
 router.delete(
@@ -39,12 +57,24 @@ router.delete(
   userController.deleteUser
 );
 
+router.patch(
+  "/block/:id",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  userController.blockUser
+);
+
+router.patch(
+  "/unblock/:id",
+  checkAuth,
+  checkRole(USER_ROLES.admin),
+  userController.unblockUser
+);
+
 router.post("/login", userController.logIn);
 
 router.post("/check-pin-code", userController.checkPinCode);
 
 router.post("/resend-pin-code", userController.resendPinCode);
-
-router.get("/current-user", checkAuth, userController.getCurrentUserInfo);
 
 module.exports = router;

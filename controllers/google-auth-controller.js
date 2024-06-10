@@ -20,6 +20,13 @@ class GoogleAuthController {
             });
 
             if (existingUser) {
+              if (existingUser.isBlocked) {
+                return done(null, false, {
+                  message:
+                    "Ваш обліковий запис заблоковано. Будь ласка, зв'яжіться з підтримкою.",
+                });
+              }
+
               const token = jwt.sign(
                 {
                   userId: existingUser.id,

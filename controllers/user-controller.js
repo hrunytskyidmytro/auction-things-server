@@ -107,6 +107,13 @@ class UserController {
       return next(error);
     }
 
+    if (existingUser.isBlocked) {
+      const error = HttpError.forbidden(
+        "Ваш обліковий запис заблоковано. Будь ласка, зв'яжіться з підтримкою."
+      );
+      return next(error);
+    }
+
     let isValidPassword = false;
     try {
       isValidPassword = await bcrypt.compare(password, existingUser.password);
@@ -257,6 +264,26 @@ class UserController {
     }
   }
 
+  async getUserById(req, res, next) {
+    const userId = req.params.id;
+
+    try {
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return next(HttpError.notFound("Користувача не знайдено."));
+      }
+
+      res.status(200).json(user);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося знайти користувача. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
   async updateUser(req, res, next) {
     const userId = req.params.id;
     const { firstName, lastName, patronymic, email, phoneNumber, companySite } =
@@ -288,6 +315,47 @@ class UserController {
     }
   }
 
+  async updateUserForAdmin(req, res, next) {
+    const userId = req.params.id;
+    const {
+      firstName,
+      lastName,
+      patronymic,
+      email,
+      phoneNumber,
+      companyName,
+      companySite,
+      position,
+    } = req.body;
+
+    try {
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return next(HttpError.notFound("Користувача не знайдено."));
+      }
+
+      user.firstName = firstName;
+      user.lastName = lastName;
+      user.patronymic = patronymic;
+      user.email = email;
+      user.phoneNumber = phoneNumber;
+      user.companyName = companyName;
+      user.companySite = companySite;
+      user.position = position;
+
+      await user.save();
+
+      res.json({ message: "Дані успішно оновлено." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося оновити дані. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
   async deleteUser(req, res, next) {
     const userId = req.params.id;
 
@@ -304,6 +372,52 @@ class UserController {
       next(
         HttpError.internalServerError(
           "Не вдалося видалити користувача. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async blockUser(req, res, next) {
+    const userId = req.params.id;
+
+    try {
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return next(HttpError.notFound("Користувача не знайдено."));
+      }
+
+      user.isBlocked = true;
+      await user.save();
+
+      res.json({ message: "Користувача успішно заблоковано." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося заблокувати користувача. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async unblockUser(req, res, next) {
+    const userId = req.params.id;
+
+    try {
+      const user = await User.findByPk(userId);
+
+      if (!user) {
+        return next(HttpError.notFound("Користувача не знайдено."));
+      }
+
+      user.isBlocked = false;
+      await user.save();
+
+      res.json({ message: "Користувача успішно розблоковано." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося розблокувати користувача. Будь ласка, спробуйте пізніше."
         )
       );
     }

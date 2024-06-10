@@ -1,7 +1,10 @@
 const { Lot, Bid, User, Category, AuctionHistory } = require("../models");
 const { Op } = require("sequelize");
 const lotService = require("../services/lot-service");
+const emailService = require("../services/email-service");
 const HttpError = require("../errors/http-error");
+const { USER_ROLES } = require("../constants/role-constants");
+const Decimal = require("decimal.js");
 
 class LotController {
   async createLot(req, res, next) {
@@ -46,28 +49,6 @@ class LotController {
       );
     }
 
-    if (buyNowPrice && buyNowPrice <= startingPrice) {
-      return next(
-        HttpError.badRequest(
-          "Ціна купівлі зараз повинна бути більшою за початкову ціну."
-        )
-      );
-    }
-
-    if (bidIncrement && bidIncrement <= 0) {
-      return next(
-        HttpError.badRequest("Крок ставки повинен бути позитивним числом.")
-      );
-    }
-
-    if (reservePrice && reservePrice <= startingPrice) {
-      return next(
-        HttpError.badRequest(
-          "Резервна ціна повинна бути більшою початковій ціні."
-        )
-      );
-    }
-
     try {
       const newLot = await Lot.create({
         userId: req.userData.userId,
@@ -76,8 +57,9 @@ class LotController {
         startingPrice,
         currentPrice: startingPrice,
         endDate,
+        originalEndDate: endDate,
         imageUrls: req.files.map((file) => file.path),
-        status: "PENDING",
+        status: "OPEN",
         categoryId,
         buyNowPrice,
         bidIncrement,
@@ -110,7 +92,7 @@ class LotController {
       existingImages,
     } = req.body;
 
-    const newImages = req.files;
+    // const newImages = req.files;
 
     try {
       const lot = await Lot.findByPk(lotId);
@@ -126,18 +108,9 @@ class LotController {
       }
 
       if (lot.status === "OPEN") {
-        if (
-          startingPrice !== undefined ||
-          buyNowPrice !== undefined ||
-          bidIncrement !== undefined ||
-          reservePrice !== undefined
-        ) {
-          return next(
-            HttpError.badRequest(
-              "Неможливо змінити ціни та крок ставки для відкритого лоту."
-            )
-          );
-        }
+        return next(
+          HttpError.badRequest("Редагування відкритого лоту неможливе.")
+        );
       }
 
       if (title && lot.title !== title) {
@@ -152,71 +125,25 @@ class LotController {
         }
       }
 
-      if (endDate && new Date(endDate) <= new Date()) {
-        return next(
-          HttpError.badRequest("Дата закінчення повинна бути у майбутньому.")
-        );
-      }
+      // let updatedImageUrls = existingImages ? existingImages : lot.imageUrl;
+      // if (newImages && newImages.length > 0) {
+      //   const newImagePaths = newImages.map((file) => file.path);
+      //   updatedImageUrls = updatedImageUrls.concat(newImagePaths);
+      // }
 
-      if (categoryId && categoryId !== lot.categoryId) {
-        const category = await Category.findByPk(categoryId);
+      // updatedImageUrls = updatedImageUrls.filter((url) =>
+      //   existingImages.includes(url)
+      // );
 
-        if (!category) {
-          return next(
-            HttpError.badRequest(
-              "Невірна категорія. Будь ласка, виберіть іншу категорію."
-            )
-          );
-        }
-      }
-
-      if (
-        buyNowPrice &&
-        buyNowPrice <= (lot.currentPrice || lot.startingPrice)
-      ) {
-        return next(
-          HttpError.badRequest(
-            "Ціна купівлі зараз повинна бути більшою за поточну/початкову ціну."
-          )
-        );
-      }
-
-      if (bidIncrement && bidIncrement <= 0) {
-        return next(
-          HttpError.badRequest("Крок ставки повинен бути позитивним числом.")
-        );
-      }
-
-      if (
-        reservePrice &&
-        reservePrice <= (lot.currentPrice || lot.startingPrice)
-      ) {
-        return next(
-          HttpError.badRequest(
-            "Резервна ціна повинна бути більшою або дорівнювати поточній/початковій ціні."
-          )
-        );
-      }
-
-      let updatedImageUrls = existingImages ? existingImages : lot.imageUrl;
-      if (newImages && newImages.length > 0) {
-        const newImagePaths = newImages.map((file) => file.path);
-        updatedImageUrls = updatedImageUrls.concat(newImagePaths);
-      }
-
-      updatedImageUrls = updatedImageUrls.filter((url) =>
-        existingImages.includes(url)
-      );
-
-      lot.title = title || lot.title;
-      lot.description = description || lot.description;
-      lot.startingPrice = startingPrice || lot.startingPrice;
-      lot.endDate = endDate || lot.endDate;
-      lot.imageUrls = updatedImageUrls;
-      lot.categoryId = categoryId || lot.categoryId;
-      lot.buyNowPrice = buyNowPrice || lot.buyNowPrice;
-      lot.bidIncrement = bidIncrement || lot.bidIncrement;
-      lot.reservePrice = reservePrice || lot.reservePrice;
+      lot.title = title;
+      lot.description = description;
+      lot.startingPrice = startingPrice;
+      lot.endDate = endDate;
+      // lot.imageUrls = updatedImageUrls;
+      lot.categoryId = categoryId;
+      lot.buyNowPrice = buyNowPrice;
+      lot.bidIncrement = bidIncrement;
+      lot.reservePrice = reservePrice;
 
       await lot.save();
 
@@ -246,10 +173,6 @@ class LotController {
 
       if (lot.status === "OPEN") {
         return next(HttpError.badRequest("Неможливо видалити відкритий лот."));
-      }
-
-      if (lot.status === "CLOSED") {
-        return next(HttpError.badRequest("Неможливо видалити закритий лот."));
       }
 
       await lot.destroy();
@@ -287,6 +210,66 @@ class LotController {
       next(
         HttpError.internalServerError(
           "Не вдалося відкрити лот. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async toggleLotStatus(req, res, next) {
+    const lotId = req.params.id;
+
+    try {
+      const lot = await Lot.findByPk(lotId);
+
+      if (!lot) {
+        return next(HttpError.notFound("Лот не знайдено."));
+      }
+
+      if (req.userData.role !== USER_ROLES.admin) {
+        return next(
+          HttpError.forbidden(
+            "Ви не маєте дозволу на зміну статусу цього лоту."
+          )
+        );
+      }
+
+      const newStatus = lot.status === "OPEN" ? "CLOSED" : "OPEN";
+
+      if (newStatus === "CLOSED") {
+        lot.endDate = new Date();
+
+        const bids = await lot.getBids();
+        const losingBids = bids.filter(
+          (bid) => bid.userId !== req.userData.userId
+        );
+        for (const bid of losingBids) {
+          const losingUser = await User.findByPk(bid.userId);
+          const amountDecimal = new Decimal(bid.amount);
+          losingUser.balance = new Decimal(losingUser.balance);
+
+          losingUser.balance = losingUser.balance.add(amountDecimal);
+          await emailService.sendEmail(
+            losingUser.email,
+            "Вибачте!",
+            `Лот було примусово закрито! Вибачте за незручності, кошти повернуто. Дякуємо за довіру!`
+          );
+
+          await losingUser.save();
+        }
+      } else if (newStatus === "OPEN") {
+        lot.endDate = lot.originalEndDate;
+      }
+
+      lot.status = newStatus;
+
+      await lot.save();
+
+      res.json({ message: "Статус лоту успішно оновлено.", lot });
+    } catch (error) {
+      console.log(error.message);
+      next(
+        HttpError.internalServerError(
+          "Не вдалося змінити статус лоту. Будь ласка, спробуйте пізніше."
         )
       );
     }
@@ -423,6 +406,32 @@ class LotController {
         totalPages: Math.ceil(totalItems / limit),
         currentPage: page,
       });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати лоти. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async getAllLotsForAdmin(req, res, next) {
+    try {
+      const lots = await Lot.findAll({
+        include: [
+          {
+            model: User,
+            as: "creator",
+            attributes: ["id", "firstName", "lastName"],
+          },
+          {
+            model: Bid,
+            include: [{ model: User }],
+          },
+        ],
+      });
+
+      res.status(200).json(lots);
     } catch (error) {
       next(
         HttpError.internalServerError(

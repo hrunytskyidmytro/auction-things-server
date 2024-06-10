@@ -7,11 +7,19 @@ const checkRole = require("../middleware/check-role");
 const fileUpload = require("../middleware/file-upload");
 
 const { validateLot } = require("../validators/lot-validation");
+const { validateUpdateLot } = require("../validators/update-lot-validation");
 const validationErrorHandler = require("../middleware/validation-error-handler");
 
 const { USER_ROLES } = require("../constants/role-constants");
 
 router.get("/", lotController.getAllLots);
+
+router.get(
+  "/admin",
+  checkAuth,
+  checkRole([USER_ROLES.admin]),
+  lotController.getAllLotsForAdmin
+);
 
 router.get("/:id", lotController.getLotById);
 
@@ -38,10 +46,10 @@ router.post(
 
 router.patch(
   "/:id",
-  fileUpload.array("images", 5),
+  // fileUpload.array("images", 5),
   checkAuth,
   checkRole([USER_ROLES.admin, USER_ROLES.seller]),
-  validateLot,
+  validateUpdateLot,
   validationErrorHandler,
   lotController.updateLot
 );
@@ -58,6 +66,13 @@ router.patch(
   checkAuth,
   checkRole([USER_ROLES.admin, USER_ROLES.seller]),
   lotController.openLot
+);
+
+router.patch(
+  "/:id/toggle-status",
+  checkAuth,
+  checkRole([USER_ROLES.admin]),
+  lotController.toggleLotStatus
 );
 
 router.get("/:id/history", lotController.getLotHistory);

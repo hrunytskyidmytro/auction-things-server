@@ -1,9 +1,7 @@
 const { Lot, User, Payment } = require("../models");
 const stripeService = require("../services/stripe-service");
 const paymentService = require("../services/payment-service");
-
 const Decimal = require("decimal.js");
-
 const HttpError = require("../errors/http-error");
 
 class PaymentController {
@@ -205,6 +203,48 @@ class PaymentController {
       res.send({ message: "Кошти успішно виведені на картку." });
     } catch (error) {
       res.status(500).send({ error: error.message });
+    }
+  }
+
+  async getAllPayments(req, res, next) {
+    try {
+      const payments = await Payment.findAll({
+        include: [
+          {
+            model: User,
+            attributes: ["id", "firstName", "lastName"],
+          },
+        ],
+      });
+      res.json(payments);
+    } catch (error) {
+      console.log(error.message);
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати платежі. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async deletePayment(req, res, next) {
+    const paymentId = req.params.id;
+
+    try {
+      const payment = await Payment.findByPk(paymentId);
+
+      if (!payment) {
+        return next(HttpError.notFound("Платіж не знайдено."));
+      }
+
+      await payment.destroy();
+      res.json({ message: "Платіж успішно видалено." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося видалити платіж. Будь ласка, спробуйте пізніше."
+        )
+      );
     }
   }
 }

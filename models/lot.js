@@ -81,6 +81,7 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
+      originalEndDate: DataTypes.DATE,
     },
     {
       sequelize,

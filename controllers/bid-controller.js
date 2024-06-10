@@ -8,7 +8,18 @@ const HttpError = require("../errors/http-error");
 class BidController {
   async getAllBids(req, res, next) {
     try {
-      const bids = await Bid.findAll();
+      const bids = await Bid.findAll({
+        include: [
+          {
+            model: Lot,
+            attributes: ["id", "title"],
+          },
+          {
+            model: User,
+            attributes: ["id", "firstName", "lastName"],
+          },
+        ],
+      });
       res.json(bids);
     } catch (error) {
       next(
@@ -157,7 +168,6 @@ class BidController {
 
       res.json({ message: "Ставку успішно видалено." });
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося видалити ставку. Будь ласка, спробуйте пізніше."

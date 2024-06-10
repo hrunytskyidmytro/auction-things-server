@@ -121,6 +121,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 0.0,
       },
+      isBlocked: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
     },
     {
       sequelize,

@@ -2,6 +2,7 @@ const { Category, Lot, User, Bid } = require("../models");
 const { Op } = require("sequelize");
 const lotService = require("../services/lot-service");
 const HttpError = require("../errors/http-error");
+const fs = require("fs");
 
 class CategoryController {
   async getAllCategories(req, res, next) {
@@ -13,6 +14,26 @@ class CategoryController {
       next(
         HttpError.internalServerError(
           "Не вдалося отримати категорії. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async getCategoryById(req, res, next) {
+    const categoryId = req.params.id;
+
+    try {
+      const category = await Category.findByPk(categoryId);
+
+      if (!category) {
+        return next(HttpError.notFound("Категорію не знайдено."));
+      }
+
+      res.status(200).json(category);
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося отримати категорію. Будь ласка, спробуйте пізніше."
         )
       );
     }
@@ -155,6 +176,10 @@ class CategoryController {
   }
 
   async createCategory(req, res, next) {
+    if (!req.file) {
+      return next(HttpError.badRequest("Зображення не надано."));
+    }
+
     const { name, description } = req.body;
 
     const existingCategory = await Category.findOne({ where: { name } });
@@ -168,16 +193,47 @@ class CategoryController {
     }
 
     try {
-      const newCategory = await Category.create({ name, description });
+      const newCategory = await Category.create({
+        image: req.file.path,
+        name,
+        description,
+      });
 
       res.status(201).json({
         message: "Категорія успішно створено.",
         category: newCategory,
       });
     } catch (error) {
+      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося створити категорію. Будь ласка, спробуйте пізніше."
+        )
+      );
+    }
+  }
+
+  async updateCategory(req, res, next) {
+    const categoryId = req.params.id;
+    const { name, description } = req.body;
+
+    try {
+      const category = await Category.findByPk(categoryId);
+
+      if (!category) {
+        return next(HttpError.notFound("Категорію не знайдено."));
+      }
+
+      category.name = name;
+      category.description = description;
+
+      await category.save();
+
+      res.json({ message: "Категорію успішно оновлено." });
+    } catch (error) {
+      next(
+        HttpError.internalServerError(
+          "Не вдалося оновити категорію. Будь ласка, спробуйте пізніше."
         )
       );
     }
@@ -205,9 +261,14 @@ class CategoryController {
         );
       }
 
+      fs.unlink(category.image, (err) => {
+        console.log(err);
+      });
+
       await category.destroy();
       res.json({ message: "Категорію успішно видалено." });
     } catch (error) {
+      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося видалити категорію. Будь ласка, спробуйте пізніше."

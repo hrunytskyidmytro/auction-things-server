@@ -30,6 +30,7 @@ class WatchlistController {
       if (!lot) {
         return next(HttpError.notFound("Лот не знайдено."));
       }
+      
       if (lot.status === "CLOSED") {
         return next(
           HttpError.badRequest(

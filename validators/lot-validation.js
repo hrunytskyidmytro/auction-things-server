@@ -12,10 +12,8 @@ exports.validateLot = [
   check("description")
     .exists()
     .withMessage("Опис є обов'язковим полем.")
-    .isLength({ min: 6, max: 1000 })
-    .withMessage(
-      "Опис лоту повинний містити не менше 6 символів та не перевищувати 1000 символів."
-    )
+    .isLength({ min: 6 })
+    .withMessage("Опис лоту повинний містити не менше 6 символів.")
     .bail(),
   check("startingPrice")
     .exists()

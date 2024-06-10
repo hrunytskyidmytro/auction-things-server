@@ -315,47 +315,6 @@ class UserController {
     }
   }
 
-  async updateUserForAdmin(req, res, next) {
-    const userId = req.params.id;
-    const {
-      firstName,
-      lastName,
-      patronymic,
-      email,
-      phoneNumber,
-      companyName,
-      companySite,
-      position,
-    } = req.body;
-
-    try {
-      const user = await User.findByPk(userId);
-
-      if (!user) {
-        return next(HttpError.notFound("Користувача не знайдено."));
-      }
-
-      user.firstName = firstName;
-      user.lastName = lastName;
-      user.patronymic = patronymic;
-      user.email = email;
-      user.phoneNumber = phoneNumber;
-      user.companyName = companyName;
-      user.companySite = companySite;
-      user.position = position;
-
-      await user.save();
-
-      res.json({ message: "Дані успішно оновлено." });
-    } catch (error) {
-      next(
-        HttpError.internalServerError(
-          "Не вдалося оновити дані. Будь ласка, спробуйте пізніше."
-        )
-      );
-    }
-  }
-
   async deleteUser(req, res, next) {
     const userId = req.params.id;
 

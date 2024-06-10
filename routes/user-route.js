@@ -6,6 +6,7 @@ const checkAuth = require("../middleware/check-auth");
 const checkRole = require("../middleware/check-role");
 
 const { validateSignUp } = require("../validators/sign-up-validation");
+const { validateUpdateUser } = require("../validators/update-user-validation");
 const validationErrorHandler = require("../middleware/validation-error-handler");
 
 const { USER_ROLES } = require("../constants/role-constants");
@@ -36,18 +37,9 @@ router.get(
 router.patch(
   "/:id",
   checkAuth,
-  // validateSignUp,
-  // validationErrorHandler,
+  validateUpdateUser,
+  validationErrorHandler,
   userController.updateUser
-);
-
-router.patch(
-  "/:id",
-  checkAuth,
-  checkRole(USER_ROLES.admin),
-  // validateSignUp,
-  // validationErrorHandler,
-  userController.updateUserForAdmin
 );
 
 router.delete(

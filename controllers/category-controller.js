@@ -44,7 +44,7 @@ class CategoryController {
 
     try {
       const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
+      const limit = parseInt(req.query.limit) || 9;
       const offset = (page - 1) * limit;
       const sortBy = req.query.sortBy;
       const currentPriceFrom = parseFloat(req.query.currentPriceFrom);
@@ -109,13 +109,10 @@ class CategoryController {
         let endDateLot = new Date();
 
         if (dateOption === "24_hours") {
-          endDateLot = new Date(currentDate);
           endDateLot.setHours(endDateLot.getHours() + 24);
         } else if (dateOption === "7_days") {
-          endDateLot = new Date(currentDate);
           endDateLot.setDate(endDateLot.getDate() + 7);
         } else if (dateOption === "30_days") {
-          endDateLot = new Date(currentDate);
           endDateLot.setDate(endDateLot.getDate() + 30);
         }
 
@@ -162,11 +159,10 @@ class CategoryController {
       res.status(200).json({
         lots: lots,
         totalItems,
-        totalPages: Math.ceil(totalItems / limit),
+        totalPages: Math.floor(totalItems / limit),
         currentPage: page,
       });
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося отримати лоти для цієї категорії. Будь ласка, спробуйте пізніше."
@@ -204,7 +200,6 @@ class CategoryController {
         category: newCategory,
       });
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося створити категорію. Будь ласка, спробуйте пізніше."
@@ -268,7 +263,6 @@ class CategoryController {
       await category.destroy();
       res.json({ message: "Категорію успішно видалено." });
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося видалити категорію. Будь ласка, спробуйте пізніше."

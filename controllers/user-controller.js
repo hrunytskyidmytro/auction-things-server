@@ -140,7 +140,6 @@ class UserController {
         pinCodeData.pinCode
       );
     } catch (err) {
-      console.log(err);
       const error = HttpError.internalServerError(
         "Не вдалося надіслати пін-код, повторіть спробу пізніше."
       );

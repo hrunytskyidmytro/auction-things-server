@@ -218,7 +218,6 @@ class PaymentController {
       });
       res.json(payments);
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося отримати платежі. Будь ласка, спробуйте пізніше."

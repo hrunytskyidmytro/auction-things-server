@@ -34,7 +34,6 @@ router.get(
   lotController.getLatestOpenLotsBySeller
 );
 
-
 router.post("/buy-now", checkAuth, lotController.buyNow);
 
 router.post(

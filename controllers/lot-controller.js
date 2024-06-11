@@ -90,10 +90,7 @@ class LotController {
       buyNowPrice,
       bidIncrement,
       reservePrice,
-      existingImages,
     } = req.body;
-
-    // const newImages = req.files;
 
     try {
       const lot = await Lot.findByPk(lotId);
@@ -126,21 +123,10 @@ class LotController {
         }
       }
 
-      // let updatedImageUrls = existingImages ? existingImages : lot.imageUrl;
-      // if (newImages && newImages.length > 0) {
-      //   const newImagePaths = newImages.map((file) => file.path);
-      //   updatedImageUrls = updatedImageUrls.concat(newImagePaths);
-      // }
-
-      // updatedImageUrls = updatedImageUrls.filter((url) =>
-      //   existingImages.includes(url)
-      // );
-
       lot.title = title;
       lot.description = description;
       lot.startingPrice = startingPrice;
       lot.endDate = endDate;
-      // lot.imageUrls = updatedImageUrls;
       lot.categoryId = categoryId;
       lot.buyNowPrice = buyNowPrice;
       lot.bidIncrement = bidIncrement;
@@ -273,7 +259,6 @@ class LotController {
 
       res.json({ message: "Статус лоту успішно оновлено.", lot });
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося змінити статус лоту. Будь ласка, спробуйте пізніше."
@@ -285,7 +270,7 @@ class LotController {
   async getAllLots(req, res, next) {
     try {
       const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
+      const limit = parseInt(req.query.limit) || 9;
       const offset = (page - 1) * limit;
       const sortBy = req.query.sortBy;
       const currentPriceFrom = parseFloat(req.query.currentPriceFrom);
@@ -357,13 +342,10 @@ class LotController {
         let endDateLot = new Date();
 
         if (dateOption === "24_hours") {
-          endDateLot = new Date(currentDate);
           endDateLot.setHours(endDateLot.getHours() + 24);
         } else if (dateOption === "7_days") {
-          endDateLot = new Date(currentDate);
           endDateLot.setDate(endDateLot.getDate() + 7);
         } else if (dateOption === "30_days") {
-          endDateLot = new Date(currentDate);
           endDateLot.setDate(endDateLot.getDate() + 30);
         }
 
@@ -410,11 +392,10 @@ class LotController {
       res.status(200).json({
         lots: lots,
         totalItems,
-        totalPages: Math.ceil(totalItems / limit),
+        totalPages: Math.floor(totalItems / limit),
         currentPage: page,
       });
     } catch (error) {
-      console.log(error.message);
       next(
         HttpError.internalServerError(
           "Не вдалося отримати лоти. Будь ласка, спробуйте пізніше."
@@ -536,7 +517,7 @@ class LotController {
   async getLotsByUser(req, res, next) {
     const userId = req.params.userId;
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 9;
     const offset = (page - 1) * limit;
     const sortBy = req.query.sortBy;
     const search = req.query.search;
@@ -610,13 +591,10 @@ class LotController {
       let endDateLot = new Date();
 
       if (dateOption === "24_hours") {
-        endDateLot = new Date(currentDate);
         endDateLot.setHours(endDateLot.getHours() + 24);
       } else if (dateOption === "7_days") {
-        endDateLot = new Date(currentDate);
         endDateLot.setDate(endDateLot.getDate() + 7);
       } else if (dateOption === "30_days") {
-        endDateLot = new Date(currentDate);
         endDateLot.setDate(endDateLot.getDate() + 30);
       }
 
@@ -662,7 +640,7 @@ class LotController {
       res.status(200).json({
         lots,
         totalItems,
-        totalPages: Math.ceil(totalItems / limit),
+        totalPages: Math.floor(totalItems / limit),
         currentPage: page,
       });
     } catch (error) {
@@ -695,6 +673,7 @@ class LotController {
           },
         ],
         order: [["createdAt", "DESC"]],
+        limit: 4,
       });
 
       res.status(200).json(openLots);
